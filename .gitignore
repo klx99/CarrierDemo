@@ -1,0 +1,72 @@
+# OSX
+#
+.DS_Store
+
+# Windows
+#
+Thumbs.db
+
+# Xcode
+#
+build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata
+*.xccheckout
+*.moved-aside
+DerivedData
+*.hmap
+*.ipa
+*.xcuserstate
+project.xcworkspace
+
+# Android/IJ
+#
+*.iml
+.idea
+.gradle
+local.properties
+
+# SVN
+.svn
+
+# node.js
+#
+#node_modules/
+!node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/common/build
+!node_modules/react-native/ReactAndroid/build/third-party-ndk/jsc
+.bin
+npm-debug.log
+/node_modules/forge/SI/
+/node_modules/react-native/SI/
+/node_modules/react-native/ReactAndroid/SI/
+
+# BUCK
+buck-out/
+\.buckd/
+
+# import homepage js
+/js/home/imports/*
+
+# tools
+/tools/*
+
+android/keystores/debug.keystore
+android/qcastcoat/coatapp/src/main/assets/*.apk
+android/qcastcoat/coatapp/src/main/jniLibs/armeabi-v7a/*.so
+.externalNativeBuild
+
+!node_module/jest-haste-map/build
+
+.externalNativeBuild
+android/repositories
+.build-cache
+
+forge_es6_viewsmanager.min.js
+forge-dump.js
