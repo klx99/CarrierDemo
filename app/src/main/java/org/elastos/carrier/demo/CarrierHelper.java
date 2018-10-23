@@ -19,15 +19,15 @@ public final class CarrierHelper {
             Carrier carrier = Carrier.getInstance();
 
             String addr = carrier.getAddress();
-            Log.i(TAG, "Carrier Address: " + addr);
+            Logger.info("Carrier Address: " + addr);
 
             String userID = carrier.getUserId();
-            Log.i(TAG, "Carrier UserId: " + userID);
+            Logger.info("Carrier UserId: " + userID);
 
             carrier.start(1000);
-            Log.i(TAG, "start carrier.");
+            Logger.info("start carrier.");
         } catch (Exception e) {
-            Log.e(TAG, "Failed to start carrier.", e);
+            Logger.error("Failed to start carrier.", e);
         }
     }
 
@@ -35,14 +35,72 @@ public final class CarrierHelper {
         Carrier carrier = Carrier.getInstance();
         if(carrier != null) {
             carrier.kill();
-            Log.i(TAG, "stop carrier.");
+            Logger.info("stop carrier.");
         }
     }
 
-    public static Carrier getCarrier() {
-        return Carrier.getInstance();
+    public static String getAddress() {
+        String addr = null;
+        try {
+            addr = Carrier.getInstance().getAddress();
+        } catch (Exception e) {
+            Logger.error("Failed to get address.", e);
+        }
+        return addr;
     }
 
-    public static final String TAG = "CarrierDemo";
+    public static void addFriend(String peerAddr) {
+        try {
+            String userId = Carrier.getIdFromAddress(peerAddr);
+            if(Carrier.getInstance().isFriend(userId)) {
+                setPeerUserId(userId);
+                Logger.info("Carrier ignore to add friend address: " + peerAddr);
+                return;
+            }
+
+            Carrier.getInstance().addFriend(peerAddr, CARRIER_HELLO_AUTH);
+            Logger.info("Carrier add friend address: " + peerAddr);
+        } catch (Exception e) {
+            Logger.error("Failed to add friend.", e);
+        }
+        return;
+    }
+
+    public static void acceptFriend(String peerUserId, String hello) {
+        try {
+            if (hello.equals(CARRIER_HELLO_AUTH) == false) {
+                Logger.error("Ignore to accept friend, not expected.");
+                return;
+            }
+
+            Carrier.getInstance().AcceptFriend(peerUserId);
+            Logger.info("Carrier accept friend UserId: " + peerUserId);
+        } catch (Exception e) {
+            Logger.error("Failed to add friend.", e);
+        }
+    }
+
+    public static void sendMessage(String message) {
+        if(sPeerUserId == null) {
+            Logger.error("Failed to send message, friend not found.");
+            return;
+        }
+
+        try {
+            Carrier.getInstance().sendFriendMessage(sPeerUserId, message);
+            Logger.info("Carrier send message to UserId: " + sPeerUserId
+                    + "\nmessage: " + message);
+        } catch (Exception e) {
+            Logger.error("Failed to add friend.", e);
+        }
+    }
+
+    public static void setPeerUserId(String peerUserId) {
+        sPeerUserId = peerUserId;
+    }
+
+    private static String sPeerUserId = null;
+
+    private static final String CARRIER_HELLO_AUTH = "auto-auth";
 }
 

@@ -15,10 +15,10 @@
             android:layout_height="wrap_content"
             android:text="My\nAddr"/>
 
-        <Button android:id="@+id/btn_add_addr"
+        <Button android:id="@+id/btn_scan_addr"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Add\nAddr"/>
+            android:text="Scan\nAddr"/>
 
         <Button android:id="@+id/btn_send_msg"
             android:layout_width="wrap_content"
@@ -35,7 +35,6 @@
     <TextView android:id="@+id/txt_message"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scrollbars="vertical"
-        android:text="Hello World!" />
+        android:scrollbars="vertical" />
 
 </LinearLayout>
