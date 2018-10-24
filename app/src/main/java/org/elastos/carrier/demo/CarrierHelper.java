@@ -1,10 +1,13 @@
 package org.elastos.carrier.demo;
 
 import android.content.Context;
-import android.util.Log;
 
 import org.elastos.carrier.Carrier;
 import org.elastos.carrier.CarrierHandler;
+import org.elastos.carrier.FriendInfo;
+import org.elastos.carrier.demo.session.CarrierSessionHelper;
+
+import java.util.List;
 
 public final class CarrierHelper {
     private CarrierHelper() {}
@@ -49,11 +52,20 @@ public final class CarrierHelper {
         return addr;
     }
 
+    public static List<FriendInfo> getFriendList() {
+        List<FriendInfo> friendList = null;
+        try {
+            friendList = Carrier.getInstance().getFriends();
+        } catch (Exception e) {
+            Logger.error("Failed to get friend list.", e);
+        }
+        return friendList;
+    }
+
     public static void addFriend(String peerAddr) {
         try {
             String userId = Carrier.getIdFromAddress(peerAddr);
             if(Carrier.getInstance().isFriend(userId)) {
-                setPeerUserId(userId);
                 Logger.info("Carrier ignore to add friend address: " + peerAddr);
                 return;
             }
@@ -91,12 +103,16 @@ public final class CarrierHelper {
             Logger.info("Carrier send message to UserId: " + sPeerUserId
                     + "\nmessage: " + message);
         } catch (Exception e) {
-            Logger.error("Failed to add friend.", e);
+            Logger.error("Failed to send message.", e);
         }
     }
 
     public static void setPeerUserId(String peerUserId) {
         sPeerUserId = peerUserId;
+    }
+
+    public static String getPeerUserId() {
+        return sPeerUserId;
     }
 
     private static String sPeerUserId = null;

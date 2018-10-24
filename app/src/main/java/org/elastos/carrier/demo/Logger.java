@@ -86,8 +86,8 @@ public final class Logger {
         assert(sRenderer != null);
 
         sRenderer.setText("");
+        sRenderer.scrollTo(0, 0);
     }
-
 
     private static TextView sRenderer = null;
 }

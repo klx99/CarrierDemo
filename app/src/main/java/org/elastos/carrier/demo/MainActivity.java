@@ -6,6 +6,9 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.ViewGroup;
@@ -21,13 +24,21 @@ import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
+import org.elastos.carrier.Carrier;
+import org.elastos.carrier.demo.session.CarrierSessionHelper;
+import org.elastos.carrier.demo.session.CarrierSessionInfo;
+import org.elastos.carrier.session.ManagerHandler;
+
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mSessionThread = new HandlerThread("CarrierHandleThread");
+        mSessionThread.start();
 
         setContentView(R.layout.activity_main);
         TextView txtMsg = findViewById(R.id.txt_message);
@@ -38,6 +49,7 @@ public class MainActivity extends Activity {
         btnClearMsg.setOnClickListener((view) -> {
             Logger.clear();
         });
+
         Button btnMyAddr = findViewById(R.id.btn_my_addr);
         btnMyAddr.setOnClickListener((view) -> {
             showAddress();
@@ -50,17 +62,38 @@ public class MainActivity extends Activity {
         btnSendMsg.setOnClickListener((view) -> {
             sendMessage();
         });
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
+        Button btnCreateSession = findViewById(R.id.btn_create_session);
+        btnCreateSession.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                createSession();
+            });
+        });
+        Button btnSendSessionData = findViewById(R.id.btn_send_session_data);
+        btnSendSessionData.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                sendSessionData();
+            });
+        });
+        Button btnDeleteSession = findViewById(R.id.btn_delete_session);
+        btnDeleteSession.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                deleteSession();
+            });
+        });
+
         CarrierHelper.startCarrier(this);
+        CarrierSessionHelper.initSessionManager(mSessionManagerHandler);
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        super.onDestroy();
+
+        CarrierSessionHelper.cleanupSessionManager();
         CarrierHelper.stopCarrier();
     }
 
@@ -76,13 +109,7 @@ public class MainActivity extends Activity {
                 return;
             }
 
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Scan Error");
-            builder.setMessage("QR Code could not be scanned");
-            builder.setNegativeButton("Cancel", (dialog, which) -> {
-                dialog.dismiss();
-            });
-            builder.create().show();
+            showError("QR Code could not be scanned.");
         }
 
         if(requestCode == REQUEST_CODE_QR_SCAN) {
@@ -99,8 +126,7 @@ public class MainActivity extends Activity {
                 dialog.dismiss();
             });
             builder.setPositiveButton("Add Friend", (dialog, which) -> {
-                mPeerAddress = result;
-                CarrierHelper.addFriend(mPeerAddress);
+                CarrierHelper.addFriend(result);
             });
             builder.create().show();
         }
@@ -160,11 +186,124 @@ public class MainActivity extends Activity {
     }
 
     private void sendMessage() {
-        String msg = "Message " + mMsgCounter++;
+        if(CarrierHelper.getPeerUserId() == null) {
+            showError("Friend is not online.");
+            return;
+        }
+
+        String msg = "Message " + mMsgCounter.getAndIncrement();
         CarrierHelper.sendMessage(msg);
     }
 
-    private int mMsgCounter = 0;
-    private String mPeerAddress = null;
+    private void createSession() {
+        if(CarrierHelper.getPeerUserId() == null) {
+            showError("Friend is not online.");
+            return;
+        }
+        if(mCarrierSessionInfo != null) {
+            showError("Session has been created.");
+            return;
+        }
+
+        CarrierSessionInfo sessionInfo = CarrierSessionHelper.newSessionAndStream(CarrierHelper.getPeerUserId());
+        if(sessionInfo == null) {
+            Log.e(Logger.TAG, "Failed to new session.");
+            return;
+        }
+        boolean wait = sessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_STREAM_INITIALIZED, 10000);
+        if(wait == false) {
+            deleteSession();
+            Logger.error("Failed to wait session initialize.");
+            return;
+        }
+
+        CarrierSessionHelper.requestSession(sessionInfo);
+        wait = sessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_REQUEST_COMPLETED, 10000);
+        if(wait == false) {
+            deleteSession();
+            Logger.error("Failed to wait session request.");
+            return;
+        }
+
+        CarrierSessionHelper.startSession(sessionInfo);
+
+        mCarrierSessionInfo = sessionInfo;
+    }
+
+    private void sendSessionData() {
+        if(mCarrierSessionInfo == null) {
+            showError("Friend is not online.");
+            return;
+        }
+        boolean connected = mCarrierSessionInfo.mSessionState.isMasked(CarrierSessionInfo.SessionState.SESSION_STREAM_CONNECTED);
+        if(connected == false) {
+            showError("Session is not connected.");
+            return;
+        }
+
+        String msg = "Message " + mMsgCounter.getAndIncrement();
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream1, msg.getBytes());
+    }
+
+    private void deleteSession() {
+        if(mCarrierSessionInfo == null) {
+            return;
+        }
+
+        CarrierSessionHelper.closeSession(mCarrierSessionInfo);
+        mCarrierSessionInfo = null;
+    }
+
+    private ManagerHandler mSessionManagerHandler = new ManagerHandler() {
+        @Override
+        public void onSessionRequest(Carrier carrier, String from, String sdp) {
+            CarrierSessionInfo sessionInfo = CarrierSessionHelper.newSessionAndStream(CarrierHelper.getPeerUserId());
+            if(sessionInfo == null) {
+                Logger.error("Failed to new session.");
+                return;
+            }
+            boolean wait = sessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_STREAM_INITIALIZED, 10000);
+            if(wait == false) {
+                deleteSession();
+                Logger.error("Failed to wait session initialize.");
+                return;
+            }
+
+            CarrierSessionHelper.replyRequest(sessionInfo);
+            wait = sessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_STREAM_TRANSPORTREADY, 10000);
+            if(wait == false) {
+                deleteSession();
+                Logger.error("Failed to wait session initialize.");
+                return;
+            }
+
+            sessionInfo.mSdp = sdp;
+            CarrierSessionHelper.startSession(sessionInfo);
+
+            mCarrierSessionInfo = sessionInfo;
+        }
+    };
+
+    private void showError(String msg) {
+        if(Looper.myLooper() != Looper.getMainLooper()) {
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(() -> {
+                showError(msg);
+            });
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Error");
+        builder.setMessage(msg);
+        builder.setNegativeButton("OK", (dialog, which) -> {
+            dialog.dismiss();
+        });
+        builder.create().show();
+    }
+
+    private HandlerThread mSessionThread;
+    private CarrierSessionInfo mCarrierSessionInfo;
+    private AtomicInteger mMsgCounter = new AtomicInteger(0);
     private static final int REQUEST_CODE_QR_SCAN = 101;
 }

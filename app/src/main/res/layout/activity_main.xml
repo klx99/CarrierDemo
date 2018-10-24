@@ -8,28 +8,44 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
-
-        <Button android:id="@+id/btn_my_addr"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="My\nAddr"/>
-
-        <Button android:id="@+id/btn_scan_addr"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Scan\nAddr"/>
-
-        <Button android:id="@+id/btn_send_msg"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Send\nMsg"/>
-
-        <Button android:id="@+id/btn_clear_msg"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Clear\nMsg"/>
-
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+            <Button android:id="@+id/btn_my_addr"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="My\nAddr"/>
+            <Button android:id="@+id/btn_scan_addr"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Scan\nAddr"/>
+            <Button android:id="@+id/btn_send_msg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Send\nMsg"/>
+            <Button android:id="@+id/btn_clear_msg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clear\nLog"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+            <Button android:id="@+id/btn_create_session"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Create\nSession"/>
+            <Button android:id="@+id/btn_send_session_data"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Send\nSession Data"/>
+            <Button android:id="@+id/btn_delete_session"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Delete\nSession"/>
+        </LinearLayout>
     </LinearLayout>
 
     <TextView android:id="@+id/txt_message"
