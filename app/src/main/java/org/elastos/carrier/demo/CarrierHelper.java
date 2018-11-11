@@ -18,7 +18,7 @@ public final class CarrierHelper {
             Carrier.Options options = new DefaultCarrierOptions(dir);
             CarrierHandler handler = new DefaultCarrierHandler();
 
-            Carrier.getInstance(options, handler);
+            Carrier.initializeInstance(options, handler);
             Carrier carrier = Carrier.getInstance();
 
             String addr = carrier.getAddress();
@@ -85,7 +85,7 @@ public final class CarrierHelper {
                 return;
             }
 
-            Carrier.getInstance().AcceptFriend(peerUserId);
+            Carrier.getInstance().acceptFriend(peerUserId);
             Logger.info("Carrier accept friend UserId: " + peerUserId);
         } catch (Exception e) {
             Logger.error("Failed to add friend.", e);

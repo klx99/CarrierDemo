@@ -2,7 +2,6 @@ package org.elastos.carrier.demo.session;
 
 import org.elastos.carrier.Carrier;
 import org.elastos.carrier.demo.Logger;
-import org.elastos.carrier.exceptions.ElastosException;
 import org.elastos.carrier.session.Manager;
 import org.elastos.carrier.session.ManagerHandler;
 import org.elastos.carrier.session.Stream;
