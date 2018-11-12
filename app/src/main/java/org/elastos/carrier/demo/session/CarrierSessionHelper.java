@@ -4,6 +4,7 @@ import org.elastos.carrier.Carrier;
 import org.elastos.carrier.demo.Logger;
 import org.elastos.carrier.session.Manager;
 import org.elastos.carrier.session.ManagerHandler;
+import org.elastos.carrier.session.PortForwardingProtocol;
 import org.elastos.carrier.session.Stream;
 import org.elastos.carrier.session.StreamType;
 
@@ -52,13 +53,9 @@ public final class CarrierSessionHelper {
             }
             sessionInfo.mSession = carrierSessionManager.newSession(peer);
 
-            Logger.info("Carrier add a unreliable stream to session.");
-            int dataOptions = 0;
-            sessionInfo.mStream0 = sessionInfo.mSession.addStream(StreamType.Application, dataOptions, sessionInfo.mSessionHandler);
-
             Logger.info("Carrier add a reliable stream to session.");
-            dataOptions = Stream.PROPERTY_RELIABLE;
-            sessionInfo.mStream1 = sessionInfo.mSession.addStream(StreamType.Text, dataOptions, sessionInfo.mSessionHandler);
+            int dataOptions = Stream.PROPERTY_RELIABLE | Stream.PROPERTY_MULTIPLEXING | Stream.PROPERTY_PORT_FORWARDING;
+            sessionInfo.mStream = sessionInfo.mSession.addStream(StreamType.Application, dataOptions, sessionInfo.mSessionHandler);
         } catch (Exception e) {
             Logger.error("Failed to new session or stream.", e);
         }
@@ -96,8 +93,7 @@ public final class CarrierSessionHelper {
 
             sessionInfo.mSessionState.maskState(CarrierSessionInfo.SessionState.SESSION_CLOSED);
             sessionInfo.mSession = null;
-            sessionInfo.mStream0 = null;
-            sessionInfo.mStream1 = null;
+            sessionInfo.mStream = null;
             sessionInfo.mSdp = null;
         } catch (Exception e) {
             Logger.error("Failed to close session or stream.", e);
@@ -113,6 +109,74 @@ public final class CarrierSessionHelper {
                     + "\nsent: " + sent);
         } catch (Exception e) {
             Logger.error("Failed to send session data.", e);
+        }
+
+        return sent;
+    }
+
+    public static void addServer(CarrierSessionInfo sessionInfo, String ipaddr, String port) {
+        try {
+            sessionInfo.mSession.addService("carrierdemo", PortForwardingProtocol.TCP, ipaddr, port);
+        } catch (Exception e) {
+            Logger.error("Failed to add session server.", e);
+        }
+    }
+
+    public static void removeServer(CarrierSessionInfo sessionInfo) {
+        try {
+            sessionInfo.mSession.removeService("carrierdemo");
+        } catch (Exception e) {
+            Logger.error("Failed to add session server.", e);
+        }
+    }
+
+    public static int openPortForwarding(Stream stream, String ipaddr, String port) {
+        int pfId = -1;
+        try {
+            pfId = stream.openPortForwarding("carrierdemo", PortForwardingProtocol.TCP, ipaddr, port);
+        } catch (Exception e) {
+            Logger.error("Failed to open port forwarding.", e);
+        }
+
+        return pfId;
+    }
+
+    public static void closePortForwarding(Stream stream, int portForwarding) {
+        try {
+            stream.closePortForwarding(portForwarding);
+        } catch (Exception e) {
+            Logger.error("Failed to open port forwarding.", e);
+        }
+    }
+
+    public static int openChannel(Stream stream, String cookie) {
+        int channelId = -1;
+        try {
+            channelId = stream.openChannel(cookie);
+        } catch (Exception e) {
+            Logger.error("Failed to open channel.", e);
+        }
+
+        return channelId;
+    }
+
+    public static void closeChannel(Stream stream, int channel) {
+        try {
+            stream.closeChannel(channel);
+        } catch (Exception e) {
+            Logger.error("Failed to open channel.", e);
+        }
+    }
+
+    public static int sendChannelData(Stream stream, int channel, byte[] data) {
+        int sent = -1;
+        try {
+            sent = stream.writeData(channel, data);
+            Logger.info("Session send data by channel: " + channel
+                    + "\ndata: " + new String(data)
+                    + "\nsent: " + sent);
+        } catch (Exception e) {
+            Logger.error("Failed to send channel data.", e);
         }
 
         return sent;

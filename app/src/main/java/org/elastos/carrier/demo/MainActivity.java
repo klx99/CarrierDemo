@@ -13,6 +13,7 @@ import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -29,6 +30,10 @@ import org.elastos.carrier.demo.session.CarrierSessionHelper;
 import org.elastos.carrier.demo.session.CarrierSessionInfo;
 import org.elastos.carrier.session.ManagerHandler;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,6 +50,7 @@ public class MainActivity extends Activity {
         txtMsg.setMovementMethod(new ScrollingMovementMethod());
         Logger.init(txtMsg);
 
+        /****************************************************/
         Button btnClearMsg = findViewById(R.id.btn_clear_msg);
         btnClearMsg.setOnClickListener((view) -> {
             Logger.clear();
@@ -63,6 +69,7 @@ public class MainActivity extends Activity {
             sendMessage();
         });
 
+        /****************************************************/
         Button btnCreateSession = findViewById(R.id.btn_create_session);
         btnCreateSession.setOnClickListener((view) -> {
             Handler handler = new Handler(mSessionThread.getLooper());
@@ -85,6 +92,103 @@ public class MainActivity extends Activity {
             });
         });
 
+        /****************************************************/
+        Button btnOpenPFServer = findViewById(R.id.btn_open_pf_svc);
+        btnOpenPFServer.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                EditText txtIpAddr = new EditText(this);
+                txtIpAddr.setHint("IP Address");
+                txtIpAddr.setText("192.168.1.147");
+                EditText txtPort = new EditText(this);
+                txtPort.setHint("Port");
+                txtPort.setText("80");
+
+                LinearLayout root = new LinearLayout(this);
+                root.setOrientation(LinearLayout.VERTICAL);
+                root.addView(txtIpAddr);
+                root.addView(txtPort);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("PF Server");
+                builder.setView(root);
+                builder.setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                });
+                builder.setPositiveButton("OK", (dialog, which) -> {
+                    String ipaddr = txtIpAddr.getText().toString();
+                    String port = txtPort.getText().toString();
+                    openPFServer(ipaddr, port);
+                });
+                builder.create().show();
+            });
+        });
+        Button btnOpenPFClient = findViewById(R.id.btn_open_pf_cli);
+        btnOpenPFClient.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                String localIpAddr = getLocalIpAddress();
+                EditText txtIpAddr = new EditText(this);
+                txtIpAddr.setText(localIpAddr);
+                txtIpAddr.setEnabled(false);
+                txtIpAddr.setFocusable(false);
+                txtIpAddr.setFocusableInTouchMode(false);
+                EditText txtPort = new EditText(this);
+                txtPort.setHint("Port");
+                txtPort.setText("8080");
+
+                LinearLayout root = new LinearLayout(this);
+                root.setOrientation(LinearLayout.VERTICAL);
+                root.addView(txtIpAddr);
+                root.addView(txtPort);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("PF Client");
+                builder.setView(root);
+                builder.setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                });
+                builder.setPositiveButton("OK", (dialog, which) -> {
+                    String ipaddr = txtIpAddr.getText().toString();
+                    String port = txtPort.getText().toString();
+                    openPFClient(ipaddr, port);
+                });
+                builder.create().show();
+            });
+        });
+        Button btnClosePF = findViewById(R.id.btn_close_pf);
+        btnClosePF.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                closePF();
+            });
+        });
+
+        /****************************************************/
+        Button btnOpenChannel = findViewById(R.id.btn_open_channel);
+        btnOpenChannel.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                openChannel();
+            });
+        });
+        Button btnSendChannelData = findViewById(R.id.btn_send_channel_data);
+        btnSendChannelData.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                sendChannelData();
+            });
+        });
+        Button btnCloseChannel = findViewById(R.id.btn_close_channel);
+        btnCloseChannel.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                closeChannel();
+            });
+        });
+
+
+        /****************************************************/
         CarrierHelper.startCarrier(this);
         CarrierSessionHelper.initSessionManager(mSessionManagerHandler);
     }
@@ -241,8 +345,8 @@ public class MainActivity extends Activity {
             return;
         }
 
-        String msg = "Message " + mMsgCounter.getAndIncrement();
-        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream1, msg.getBytes());
+        String msg = "Stream Message " + mMsgCounter.getAndIncrement();
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
     }
 
     private void deleteSession() {
@@ -252,6 +356,113 @@ public class MainActivity extends Activity {
 
         CarrierSessionHelper.closeSession(mCarrierSessionInfo);
         mCarrierSessionInfo = null;
+    }
+
+    private void openPFServer(String ipaddr, String port) {
+        if(CarrierHelper.getPeerUserId() == null) {
+            showError("Friend is not online.");
+            return;
+        }
+        if(mCarrierSessionInfo == null) {
+            showError("Session has not been created.");
+            return;
+        }
+        if(mCarrierSessionInfo.mStream == null) {
+            showError("Stream has not been created.");
+            return;
+        }
+
+        CarrierSessionHelper.addServer(mCarrierSessionInfo, ipaddr, port);
+    }
+
+    private void openPFClient(String ipaddr, String port) {
+        if(CarrierHelper.getPeerUserId() == null) {
+            showError("Friend is not online.");
+            return;
+        }
+        if(mCarrierSessionInfo == null) {
+            showError("Session has not been created.");
+            return;
+        }
+        if(mCarrierSessionInfo.mStream == null) {
+            showError("Stream has not been created.");
+            return;
+        }
+        if(mCarrierSessionInfo.mPortForwarding > 0) {
+            showError("PortForwarding has not been created.");
+            return;
+        }
+
+        int channel = CarrierSessionHelper.openPortForwarding(mCarrierSessionInfo.mStream, ipaddr, port);
+        if(channel <= 0) {
+            Logger.error("Failed to open port forwarding. retval=" + channel);
+            return;
+        }
+    }
+
+    private void closePF() {
+        if(mCarrierSessionInfo == null) {
+            return;
+        }
+
+        CarrierSessionHelper.closePortForwarding(mCarrierSessionInfo.mStream, mCarrierSessionInfo.mPortForwarding);
+        mCarrierSessionInfo.mPortForwarding = -1;
+
+        CarrierSessionHelper.removeServer(mCarrierSessionInfo);
+    }
+
+    private void openChannel() {
+        if(CarrierHelper.getPeerUserId() == null) {
+            showError("Friend is not online.");
+            return;
+        }
+        if(mCarrierSessionInfo == null) {
+            showError("Session has not been created.");
+            return;
+        }
+        if(mCarrierSessionInfo.mStream == null) {
+            showError("Stream has not been created.");
+            return;
+        }
+        if(mCarrierSessionInfo.mChannel > 0) {
+            showError("Channel has not been created.");
+            return;
+        }
+
+        int channel = CarrierSessionHelper.openChannel(mCarrierSessionInfo.mStream,"channel-0");
+        if(channel <= 0) {
+            Logger.error("Failed to open channel. retval=" + channel);
+            return;
+        }
+        boolean wait = mCarrierSessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_CHANNEL_OPENED, 10000);
+        if(wait == false) {
+            closeChannel();
+            Logger.error("Failed to wait channel open.");
+            return;
+        }
+    }
+
+    private void sendChannelData() {
+        if(mCarrierSessionInfo == null) {
+            showError("Friend is not online.");
+            return;
+        }
+        if(mCarrierSessionInfo.mChannel <= 0) {
+            showError("Channel is not opened.");
+            return;
+        }
+
+        String msg = "Channel Message " + mMsgCounter.getAndIncrement();
+        CarrierSessionHelper.sendChannelData(mCarrierSessionInfo.mStream, mCarrierSessionInfo.mChannel, msg.getBytes());
+    }
+
+    private void closeChannel() {
+        if(mCarrierSessionInfo == null) {
+            return;
+        }
+
+        CarrierSessionHelper.closeChannel(mCarrierSessionInfo.mStream, mCarrierSessionInfo.mChannel);
+        mCarrierSessionInfo.mChannel = -1;
     }
 
     private ManagerHandler mSessionManagerHandler = new ManagerHandler() {
@@ -300,6 +511,39 @@ public class MainActivity extends Activity {
             dialog.dismiss();
         });
         builder.create().show();
+    }
+
+    private static String getLocalIpAddress() {
+        String ipaddr = null;
+        try {
+            Enumeration<NetworkInterface> enum_ni = NetworkInterface.getNetworkInterfaces();
+            while(enum_ni.hasMoreElements()) {
+                NetworkInterface net_if = enum_ni.nextElement();
+                String net_name = net_if.getName();
+                Enumeration<InetAddress> enum_ia = net_if.getInetAddresses();
+                while(enum_ia.hasMoreElements()) {
+                    InetAddress ia = enum_ia.nextElement();
+                    if (ia.isSiteLocalAddress() == false
+                    || ia.isLoopbackAddress() == true
+                    || ia.isLinkLocalAddress() == true ) {
+                        continue;
+                    }
+
+                    if(net_name.startsWith("eth")) {
+                        ipaddr = ia.getHostAddress();
+                    } else if(ipaddr == null
+                            && net_name.startsWith("wlan")) {
+                        ipaddr = ia.getHostAddress();
+                    }
+
+                    Logger.info("get device name=" + net_name + " ipaddr=" + ipaddr);
+                }
+            }
+        } catch (SocketException ex) {
+            Logger.error(ex.toString());
+        }
+
+        return ipaddr;
     }
 
     private HandlerThread mSessionThread;

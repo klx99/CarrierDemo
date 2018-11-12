@@ -46,6 +46,38 @@
                 android:layout_height="wrap_content"
                 android:text="Delete\nSession"/>
         </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+            <Button android:id="@+id/btn_open_pf_svc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Open\nPF Service"/>
+            <Button android:id="@+id/btn_open_pf_cli"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Open\nPF Client"/>
+            <Button android:id="@+id/btn_close_pf"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Close\nPF"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+            <Button android:id="@+id/btn_open_channel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Open\nChannel"/>
+            <Button android:id="@+id/btn_send_channel_data"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Send\nChannel Data"/>
+            <Button android:id="@+id/btn_close_channel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Close\nSession"/>
+        </LinearLayout>
     </LinearLayout>
 
     <TextView android:id="@+id/txt_message"
