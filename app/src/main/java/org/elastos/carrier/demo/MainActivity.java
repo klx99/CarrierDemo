@@ -30,6 +30,10 @@ import org.elastos.carrier.demo.session.CarrierSessionHelper;
 import org.elastos.carrier.demo.session.CarrierSessionInfo;
 import org.elastos.carrier.session.ManagerHandler;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -62,6 +66,12 @@ public class MainActivity extends Activity {
         });
         Button btnScanAddr = findViewById(R.id.btn_scan_addr);
         btnScanAddr.setOnClickListener((view) -> {
+            String address = getAddressFromTmp();
+            if(address != null) {
+                CarrierHelper.addFriend(address);
+                return;
+            }
+
             scanAddress();
         });
         Button btnSendMsg = findViewById(R.id.btn_send_msg);
@@ -99,10 +109,10 @@ public class MainActivity extends Activity {
             handler.post(() -> {
                 EditText txtIpAddr = new EditText(this);
                 txtIpAddr.setHint("IP Address");
-                txtIpAddr.setText("192.168.1.147");
+                txtIpAddr.setText("192.168.33.60");
                 EditText txtPort = new EditText(this);
                 txtPort.setHint("Port");
-                txtPort.setText("80");
+                txtPort.setText("8080");
 
                 LinearLayout root = new LinearLayout(this);
                 root.setOrientation(LinearLayout.VERTICAL);
@@ -135,7 +145,7 @@ public class MainActivity extends Activity {
                 txtIpAddr.setFocusableInTouchMode(false);
                 EditText txtPort = new EditText(this);
                 txtPort.setHint("Port");
-                txtPort.setText("8080");
+                txtPort.setText("12345");
 
                 LinearLayout root = new LinearLayout(this);
                 root.setOrientation(LinearLayout.VERTICAL);
@@ -161,6 +171,36 @@ public class MainActivity extends Activity {
             Handler handler = new Handler(mSessionThread.getLooper());
             handler.post(() -> {
                 closePF();
+            });
+        });
+        Button btnOpenPFPeerSvc = findViewById(R.id.btn_open_pf_peer_svc);
+        btnOpenPFPeerSvc.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                EditText txtIpAddr = new EditText(this);
+                txtIpAddr.setHint("IP Address");
+                txtIpAddr.setText("192.168.33.60");
+                EditText txtPort = new EditText(this);
+                txtPort.setHint("Port");
+                txtPort.setText("8080");
+
+                LinearLayout root = new LinearLayout(this);
+                root.setOrientation(LinearLayout.VERTICAL);
+                root.addView(txtIpAddr);
+                root.addView(txtPort);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("PF Peer Server");
+                builder.setView(root);
+                builder.setNegativeButton("Cancel", (dialog, which) -> {
+                    dialog.dismiss();
+                });
+                builder.setPositiveButton("OK", (dialog, which) -> {
+                    String ipaddr = txtIpAddr.getText().toString();
+                    String port = txtPort.getText().toString();
+                    openPFPeerServer(ipaddr, port);
+                });
+                builder.create().show();
             });
         });
 
@@ -289,6 +329,11 @@ public class MainActivity extends Activity {
         startActivityForResult( i,REQUEST_CODE_QR_SCAN);
     }
 
+    private String getAddressFromTmp() {
+        String content = readFile(new File("/data/local/tmp/debug-carrier"));
+        return content;
+    }
+
     private void sendMessage() {
         if(CarrierHelper.getPeerUserId() == null) {
             showError("Friend is not online.");
@@ -309,29 +354,27 @@ public class MainActivity extends Activity {
             return;
         }
 
-        CarrierSessionInfo sessionInfo = CarrierSessionHelper.newSessionAndStream(CarrierHelper.getPeerUserId());
-        if(sessionInfo == null) {
+        mCarrierSessionInfo = CarrierSessionHelper.newSessionAndStream(CarrierHelper.getPeerUserId());
+        if(mCarrierSessionInfo == null) {
             Log.e(Logger.TAG, "Failed to new session.");
             return;
         }
-        boolean wait = sessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_STREAM_INITIALIZED, 10000);
+        boolean wait = mCarrierSessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_STREAM_INITIALIZED, 10000);
         if(wait == false) {
             deleteSession();
             Logger.error("Failed to wait session initialize.");
             return;
         }
 
-        CarrierSessionHelper.requestSession(sessionInfo);
-        wait = sessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_REQUEST_COMPLETED, 10000);
+        CarrierSessionHelper.requestSession(mCarrierSessionInfo);
+        wait = mCarrierSessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_REQUEST_COMPLETED, 30000);
         if(wait == false) {
             deleteSession();
             Logger.error("Failed to wait session request.");
             return;
         }
 
-        CarrierSessionHelper.startSession(sessionInfo);
-
-        mCarrierSessionInfo = sessionInfo;
+        CarrierSessionHelper.startSession(mCarrierSessionInfo);
     }
 
     private void sendSessionData() {
@@ -373,6 +416,7 @@ public class MainActivity extends Activity {
         }
 
         CarrierSessionHelper.addServer(mCarrierSessionInfo, ipaddr, port);
+        Logger.info("Add server. ipaddr=" + ipaddr + " port=" + port);
     }
 
     private void openPFClient(String ipaddr, String port) {
@@ -393,11 +437,13 @@ public class MainActivity extends Activity {
             return;
         }
 
-        int channel = CarrierSessionHelper.openPortForwarding(mCarrierSessionInfo.mStream, ipaddr, port);
-        if(channel <= 0) {
-            Logger.error("Failed to open port forwarding. retval=" + channel);
+        mCarrierSessionInfo.mPortForwarding = CarrierSessionHelper.openPortForwarding(mCarrierSessionInfo.mStream, ipaddr, port);
+        if(mCarrierSessionInfo.mPortForwarding <= 0) {
+            Logger.error("Failed to open port forwarding. retval=" + mCarrierSessionInfo.mPortForwarding);
             return;
         }
+
+        Logger.info("Open port forwarding. id=" + mCarrierSessionInfo.mPortForwarding  + " ipaddr=" + ipaddr + " port=" + port);
     }
 
     private void closePF() {
@@ -409,6 +455,25 @@ public class MainActivity extends Activity {
         mCarrierSessionInfo.mPortForwarding = -1;
 
         CarrierSessionHelper.removeServer(mCarrierSessionInfo);
+    }
+
+    private void openPFPeerServer(String ipaddr, String port) {
+        if(CarrierHelper.getPeerUserId() == null) {
+            showError("Friend is not online.");
+            return;
+        }
+        if(mCarrierSessionInfo == null) {
+            showError("Session has not been created.");
+            return;
+        }
+        if(mCarrierSessionInfo.mStream == null) {
+            showError("Stream has not been created.");
+            return;
+        }
+
+        String ipport = "addServer:" + ipaddr + ":" + port;
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, ipport.getBytes());
+        Logger.info("Add peer server. ipaddr=" + ipaddr + " port=" + port);
     }
 
     private void openChannel() {
@@ -429,9 +494,9 @@ public class MainActivity extends Activity {
             return;
         }
 
-        int channel = CarrierSessionHelper.openChannel(mCarrierSessionInfo.mStream,"channel-0");
-        if(channel <= 0) {
-            Logger.error("Failed to open channel. retval=" + channel);
+        mCarrierSessionInfo.mChannel = CarrierSessionHelper.openChannel(mCarrierSessionInfo.mStream,"channel-0");
+        if(mCarrierSessionInfo.mChannel <= 0) {
+            Logger.error("Failed to open channel. retval=" + mCarrierSessionInfo.mChannel);
             return;
         }
         boolean wait = mCarrierSessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_CHANNEL_OPENED, 10000);
@@ -544,6 +609,40 @@ public class MainActivity extends Activity {
         }
 
         return ipaddr;
+    }
+
+    public static String readFile(File file) {
+        if(file.exists() == false) {
+            Logger.info(file.getAbsolutePath() + " is not exists.");
+            return null;
+        }
+
+        InputStreamReader input_reader = null;
+        BufferedReader buf_reader = null;
+        try {
+            input_reader = new InputStreamReader(new FileInputStream(file), "UTF-8");
+            buf_reader = new BufferedReader(input_reader);
+            String line;
+            StringBuffer result = new StringBuffer();
+            while ((line = buf_reader.readLine()) != null) {
+                if(result.length() > 0) {
+                    result.append('\n');
+                }
+
+                result.append(line);
+            }
+            return result.toString();
+        } catch (Exception e) {
+            Logger.error("Failed to read file: " + file.getAbsolutePath(), e);
+        } finally {
+            try {
+                if (buf_reader != null) buf_reader.close();
+                if (input_reader != null) input_reader.close();
+            } catch (Exception e) {
+            }
+        }
+
+        return null;
     }
 
     private HandlerThread mSessionThread;

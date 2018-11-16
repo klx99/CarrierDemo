@@ -51,7 +51,7 @@ public final class CarrierSessionHelper {
                 Logger.error("Failed to new session, manager not initialized.");
                 return null;
             }
-            sessionInfo.mSession = carrierSessionManager.newSession(peer);
+            sessionInfo.mSession = Manager.getInstance().newSession(peer);
 
             Logger.info("Carrier add a reliable stream to session.");
             int dataOptions = Stream.PROPERTY_RELIABLE | Stream.PROPERTY_MULTIPLEXING | Stream.PROPERTY_PORT_FORWARDING;

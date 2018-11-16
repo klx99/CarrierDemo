@@ -41,6 +41,8 @@ public class DefaultCarrierHandler extends AbstractCarrierHandler {
         Logger.info("Carrier friend connect. peer UserId: " + friendId + " status:" + status);
         if(status == ConnectionStatus.Connected) {
             CarrierHelper.setPeerUserId(friendId);
+        } else {
+            CarrierHelper.setPeerUserId(null);
         }
     }
 

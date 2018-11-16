@@ -121,9 +121,17 @@ public class CarrierSessionInfo {
 
             @Override
             public void onStreamData(Stream stream, byte[] data) {
+                String dataStr = new String(data);
+
                 Logger.info("Session received data on stream: " + stream
-                        + "\ndata: " + new String(data)
+                        + "\ndata: " + dataStr
                         + "\nlen: " + data.length);
+
+                if(dataStr.startsWith("addServer")) {
+                    String[] args = dataStr.split(":");
+                   CarrierSessionHelper.addServer(CarrierSessionInfo.this, args[1], args[2]);
+                    Logger.info("Add server. ipaddr=" + args[1] + " port=" + args[2]);
+                }
             }
 
             @Override
