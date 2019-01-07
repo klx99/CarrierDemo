@@ -367,6 +367,12 @@ public class MainActivity extends Activity {
         }
 
         CarrierSessionHelper.requestSession(mCarrierSessionInfo);
+        wait = mCarrierSessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_STREAM_TRANSPORTREADY, 30000);
+        if(wait == false) {
+            deleteSession();
+            Logger.error("Failed to wait session request transport ready.");
+            return;
+        }
         wait = mCarrierSessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_REQUEST_COMPLETED, 30000);
         if(wait == false) {
             deleteSession();
