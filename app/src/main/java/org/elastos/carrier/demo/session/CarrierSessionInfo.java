@@ -25,6 +25,7 @@ public class CarrierSessionInfo {
                                                                 | SESSION_STREAM_CONNECTING | SESSION_STREAM_CONNECTED;
 
         public void maskState(int state) {
+            Logger.info("Carrier mask state/mState : " + getStateBinary(mState) + "/" +  getStateBinary(mState));
             mState |= state;
             synchronized (mLocker) {
                 mLocker.notifyAll();
@@ -72,6 +73,7 @@ public class CarrierSessionInfo {
 
         public boolean waitForState(int carrierState, long timeoutMs) {
             Logger.info("Carrier wait for state : " + getStateBinary(carrierState) + " timeout=" + timeoutMs);
+            Logger.info("Carrier wait state/mState : " + getStateBinary(mState) + "/" +  getStateBinary(mState));
             long fromTimeMs = System.currentTimeMillis();
             while (!isMasked(carrierState)) {
                 synchronized (mLocker) {
