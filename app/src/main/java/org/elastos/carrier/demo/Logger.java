@@ -18,18 +18,21 @@ public final class Logger {
     }
 
     public static void info(String msg) {
-        Log.i(TAG, msg);
         if(Looper.myLooper() != Looper.getMainLooper()) {
             Handler handler = new Handler(Looper.getMainLooper());
             handler.post(() -> {
-                assert(sRenderer != null);
-
-                CharSequence oldMsg = sRenderer.getText();
-                oldMsg = oldMsg + "\n\nI: " + msg;
-                sRenderer.setText(oldMsg);
+               info(msg);
             });
             return;
         }
+
+        Log.i(TAG, msg);
+
+        assert(sRenderer != null);
+
+        CharSequence oldMsg = sRenderer.getText();
+        oldMsg = oldMsg + "\n\nI: " + msg;
+        sRenderer.setText(oldMsg);
     }
 
     public static void error(String msg) {
@@ -41,13 +44,13 @@ public final class Logger {
             return;
         }
 
+        Log.e(TAG, msg);
+
         assert(sRenderer != null);
 
         CharSequence oldMsg = sRenderer.getText();
         oldMsg = oldMsg + "\n\nE: " + msg;
         sRenderer.setText(oldMsg);
-
-        Log.e(TAG, msg);
     }
 
     public static void error(String msg, Throwable tr) {
@@ -59,6 +62,8 @@ public final class Logger {
             return;
         }
 
+        Log.e(TAG, msg, tr);
+
         assert(sRenderer != null);
 
         CharSequence oldMsg = sRenderer.getText();
@@ -67,8 +72,6 @@ public final class Logger {
         tr.printStackTrace(new PrintWriter(writer));
         oldMsg = oldMsg + "\nExcepton: " + writer.toString();
         sRenderer.setText(oldMsg);
-
-        Log.e(TAG, msg, tr);
     }
 
     public static void clear() {
