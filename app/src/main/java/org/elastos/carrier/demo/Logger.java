@@ -18,21 +18,18 @@ public final class Logger {
     }
 
     public static void info(String msg) {
+        Log.i(TAG, msg);
         if(Looper.myLooper() != Looper.getMainLooper()) {
             Handler handler = new Handler(Looper.getMainLooper());
             handler.post(() -> {
-               info(msg);
+                assert(sRenderer != null);
+
+                CharSequence oldMsg = sRenderer.getText();
+                oldMsg = oldMsg + "\n\nI: " + msg;
+                sRenderer.setText(oldMsg);
             });
             return;
         }
-
-        assert(sRenderer != null);
-
-        CharSequence oldMsg = sRenderer.getText();
-        oldMsg = oldMsg + "\n\nI: " + msg;
-        sRenderer.setText(oldMsg);
-
-        Log.i(TAG, msg);
     }
 
     public static void error(String msg) {

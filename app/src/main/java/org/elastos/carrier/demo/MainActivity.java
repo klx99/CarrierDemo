@@ -1,14 +1,18 @@
 package org.elastos.carrier.demo;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.ViewGroup;
@@ -226,11 +230,22 @@ public class MainActivity extends Activity {
                 closeChannel();
             });
         });
+    }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
 
         /****************************************************/
         CarrierHelper.startCarrier(this);
         CarrierSessionHelper.initSessionManager(mSessionManagerHandler);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        android.os.Process.killProcess(android.os.Process.myPid());
     }
 
     @Override
@@ -325,8 +340,29 @@ public class MainActivity extends Activity {
     }
 
     private void scanAddress() {
-        Intent i = new Intent(MainActivity.this, QrCodeActivity.class);
-        startActivityForResult( i,REQUEST_CODE_QR_SCAN);
+        ActivityCompat.requestPermissions(this,
+                new String[]{ Manifest.permission.CAMERA },
+                1);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode != 1) {
+            return;
+        }
+
+        for (int idx = 0; idx < permissions.length; idx++) {
+            if(permissions[idx].equals(Manifest.permission.CAMERA) == false) {
+                continue;
+            }
+
+            if (grantResults[idx] == PackageManager.PERMISSION_GRANTED) {
+                Intent intent = new Intent(MainActivity.this, QrCodeActivity.class);
+                startActivityForResult( intent, REQUEST_CODE_QR_SCAN);
+            }
+        }
     }
 
     private String getAddressFromTmp() {
@@ -545,6 +581,7 @@ public class MainActivity extends Activity {
                 return;
             }
             boolean wait = sessionInfo.mSessionState.waitForState(CarrierSessionInfo.SessionState.SESSION_STREAM_INITIALIZED, 10000);
+            Logger.error("==================================");
             if(wait == false) {
                 deleteSession();
                 Logger.error("Failed to wait session initialize.");
