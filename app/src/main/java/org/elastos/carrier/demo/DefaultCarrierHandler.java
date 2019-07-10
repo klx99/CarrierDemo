@@ -28,7 +28,7 @@ public class DefaultCarrierHandler extends AbstractCarrierHandler {
     @Override
     public void onFriendRequest(Carrier carrier, String userId, UserInfo info, String hello) {
         Logger.info("Carrier received friend request. peer UserId: " + userId);
-        CarrierHelper.acceptFriend(userId, hello);
+//        CarrierHelper.acceptFriend(userId, hello);
     }
 
     @Override

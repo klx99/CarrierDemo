@@ -15,6 +15,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
@@ -230,22 +231,11 @@ public class MainActivity extends Activity {
                 closeChannel();
             });
         });
-    }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
 
         /****************************************************/
         CarrierHelper.startCarrier(this);
         CarrierSessionHelper.initSessionManager(mSessionManagerHandler);
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
-        android.os.Process.killProcess(android.os.Process.myPid());
     }
 
     @Override
@@ -254,6 +244,15 @@ public class MainActivity extends Activity {
 
         CarrierSessionHelper.cleanupSessionManager();
         CarrierHelper.stopCarrier();
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_BACK) {
+            android.os.Process.killProcess(android.os.Process.myPid());
+        }
+
+        return super.onKeyUp(keyCode, event);
     }
 
     @Override
@@ -340,9 +339,15 @@ public class MainActivity extends Activity {
     }
 
     private void scanAddress() {
-        ActivityCompat.requestPermissions(this,
-                new String[]{ Manifest.permission.CAMERA },
-                1);
+        int hasCameraPermission = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+        if(hasCameraPermission == PackageManager.PERMISSION_GRANTED) {
+            Intent intent = new Intent(MainActivity.this, QrCodeActivity.class);
+            startActivityForResult( intent, REQUEST_CODE_QR_SCAN);
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.CAMERA},
+                    1);
+        }
     }
 
     @Override
@@ -430,8 +435,10 @@ public class MainActivity extends Activity {
             return;
         }
 
-        String msg = "Stream Message " + mMsgCounter.getAndIncrement();
-        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
+        for(int idx = 0; idx < 100; idx++) {
+            String msg = "Stream Message " + mMsgCounter.getAndIncrement();
+            CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
+        }
     }
 
     private void deleteSession() {
