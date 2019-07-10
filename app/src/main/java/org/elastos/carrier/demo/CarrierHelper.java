@@ -5,7 +5,6 @@ import android.content.Context;
 import org.elastos.carrier.Carrier;
 import org.elastos.carrier.CarrierHandler;
 import org.elastos.carrier.FriendInfo;
-import org.elastos.carrier.demo.session.CarrierSessionHelper;
 
 import java.util.List;
 

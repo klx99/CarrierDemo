@@ -1,92 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <TextView
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
-            <Button android:id="@+id/btn_my_addr"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="My\nAddr"/>
-            <Button android:id="@+id/btn_scan_addr"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Scan\nAddr"/>
-            <Button android:id="@+id/btn_send_msg"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Send\nMsg"/>
-            <Button android:id="@+id/btn_clear_msg"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Clear\nLog"/>
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
-            <Button android:id="@+id/btn_create_session"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Create\nSession"/>
-            <Button android:id="@+id/btn_send_session_data"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Send\nSession Data"/>
-            <Button android:id="@+id/btn_delete_session"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Delete\nSession"/>
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
-            <Button android:id="@+id/btn_open_pf_svc"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Open\nPF Server"/>
-            <Button android:id="@+id/btn_open_pf_cli"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Open\nPF Client"/>
-            <Button android:id="@+id/btn_close_pf"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Close\nPF"/>
-            <Button android:id="@+id/btn_open_pf_peer_svc"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Open\nPF Peer Svc"/>
-        </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
-            <Button android:id="@+id/btn_open_channel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Open\nChannel"/>
-            <Button android:id="@+id/btn_send_channel_data"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Send\nChannel Data"/>
-            <Button android:id="@+id/btn_close_channel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Close\nChannel"/>
-        </LinearLayout>
-    </LinearLayout>
+        android:text="Hello World!"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView android:id="@+id/txt_message"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scrollbars="vertical" />
-
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
