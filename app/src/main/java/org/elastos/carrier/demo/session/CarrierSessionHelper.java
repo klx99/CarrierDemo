@@ -1,6 +1,7 @@
 package org.elastos.carrier.demo.session;
 
 import org.elastos.carrier.Carrier;
+import org.elastos.carrier.demo.CarrierHelper;
 import org.elastos.carrier.demo.Logger;
 import org.elastos.carrier.session.Manager;
 import org.elastos.carrier.session.ManagerHandler;
@@ -13,12 +14,11 @@ public final class CarrierSessionHelper {
 
     public static void initSessionManager(ManagerHandler handler) {
         try {
-            Manager manager = Manager.getInstance();
-            if(manager != null) {
+            if(sManager != null) {
                 return;
             }
 
-            Manager.initializeInstance(Carrier.getInstance(), handler);
+            sManager = Manager.createInstance(CarrierHelper.getCarrier(), handler);
             Logger.info("Session manager initialized.");
         } catch (Exception e) {
             Logger.error("Failed to init session manager.", e);
@@ -27,7 +27,7 @@ public final class CarrierSessionHelper {
 
     public static void cleanupSessionManager() {
         try {
-            Manager manager = Manager.getInstance();
+            Manager manager = sManager;
             if(manager == null) {
                 return;
             }
@@ -46,15 +46,16 @@ public final class CarrierSessionHelper {
             sessionInfo = new CarrierSessionInfo();
 
             Logger.info("Carrier new session. peer:" + peer);
-            Manager carrierSessionManager = Manager.getInstance();
+            Manager carrierSessionManager = sManager;
             if (carrierSessionManager == null) {
                 Logger.error("Failed to new session, manager not initialized.");
                 return null;
             }
-            sessionInfo.mSession = Manager.getInstance().newSession(peer);
+            sessionInfo.mSession = sManager.newSession(peer);
 
             Logger.info("Carrier add a reliable stream to session.");
-            int dataOptions = Stream.PROPERTY_RELIABLE | Stream.PROPERTY_MULTIPLEXING | Stream.PROPERTY_PORT_FORWARDING;
+//            int dataOptions = Stream.PROPERTY_RELIABLE | Stream.PROPERTY_MULTIPLEXING | Stream.PROPERTY_PORT_FORWARDING;
+            int dataOptions = Stream.PROPERTY_RELIABLE;
             sessionInfo.mStream = sessionInfo.mSession.addStream(StreamType.Application, dataOptions, sessionInfo.mSessionHandler);
         } catch (Exception e) {
             Logger.error("Failed to new session or stream.", e);
@@ -181,5 +182,7 @@ public final class CarrierSessionHelper {
 
         return sent;
     }
+
+    private static Manager sManager;
 }
 

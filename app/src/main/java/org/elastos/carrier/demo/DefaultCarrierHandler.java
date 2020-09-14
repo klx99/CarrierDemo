@@ -6,6 +6,7 @@ import org.elastos.carrier.ConnectionStatus;
 import org.elastos.carrier.FriendInfo;
 import org.elastos.carrier.UserInfo;
 
+import java.util.Date;
 import java.util.List;
 
 public class DefaultCarrierHandler extends AbstractCarrierHandler {
@@ -47,7 +48,8 @@ public class DefaultCarrierHandler extends AbstractCarrierHandler {
     }
 
     @Override
-    public void onFriendMessage(Carrier carrier, String from, byte[] message) {
+    public void onFriendMessage(Carrier carrier, String from, byte[] message,
+                                Date timestamp, boolean isOffline) {
         Logger.info("Carrier receiver message from UserId: " + from
                 + "\nmessage: " + new String(message));
     }

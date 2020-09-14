@@ -11,22 +11,25 @@ import java.util.List;
 public final class CarrierHelper {
     private CarrierHelper() {}
 
+    public static Carrier getCarrier() {
+       return sCarrier;
+    }
+
     public static void startCarrier(Context context) {
         try {
             String dir = context.getFilesDir().getAbsolutePath();
             Carrier.Options options = new DefaultCarrierOptions(dir);
             CarrierHandler handler = new DefaultCarrierHandler();
 
-            Carrier.initializeInstance(options, handler);
-            Carrier carrier = Carrier.getInstance();
+            sCarrier = Carrier.createInstance(options, handler);
 
-            String addr = carrier.getAddress();
+            String addr = sCarrier.getAddress();
             Logger.info("Carrier Address: " + addr);
 
-            String userID = carrier.getUserId();
+            String userID = sCarrier.getUserId();
             Logger.info("Carrier UserId: " + userID);
 
-            carrier.start(1000);
+            sCarrier.start(1000);
             Logger.info("start carrier.");
         } catch (Exception e) {
             Logger.error("Failed to start carrier.", e);
@@ -34,7 +37,7 @@ public final class CarrierHelper {
     }
 
     public static void stopCarrier() {
-        Carrier carrier = Carrier.getInstance();
+        Carrier carrier = sCarrier;
         if(carrier != null) {
             carrier.kill();
             Logger.info("stop carrier.");
@@ -44,7 +47,7 @@ public final class CarrierHelper {
     public static String getAddress() {
         String addr = null;
         try {
-            addr = Carrier.getInstance().getAddress();
+            addr = sCarrier.getAddress();
         } catch (Exception e) {
             Logger.error("Failed to get address.", e);
         }
@@ -54,7 +57,7 @@ public final class CarrierHelper {
     public static List<FriendInfo> getFriendList() {
         List<FriendInfo> friendList = null;
         try {
-            friendList = Carrier.getInstance().getFriends();
+            friendList = sCarrier.getFriends();
         } catch (Exception e) {
             Logger.error("Failed to get friend list.", e);
         }
@@ -64,12 +67,12 @@ public final class CarrierHelper {
     public static void addFriend(String peerAddr) {
         try {
             String userId = Carrier.getIdFromAddress(peerAddr);
-            if(Carrier.getInstance().isFriend(userId)) {
+            if(sCarrier.isFriend(userId)) {
                 Logger.info("Carrier ignore to add friend address: " + peerAddr);
                 return;
             }
 
-            Carrier.getInstance().addFriend(peerAddr, CARRIER_HELLO_AUTH);
+            sCarrier.addFriend(peerAddr, CARRIER_HELLO_AUTH);
             Logger.info("Carrier add friend address: " + peerAddr);
         } catch (Exception e) {
             Logger.error("Failed to add friend.", e);
@@ -84,7 +87,7 @@ public final class CarrierHelper {
                 return;
             }
 
-            Carrier.getInstance().acceptFriend(peerUserId);
+            sCarrier.acceptFriend(peerUserId);
             Logger.info("Carrier accept friend UserId: " + peerUserId);
         } catch (Exception e) {
             Logger.error("Failed to add friend.", e);
@@ -98,7 +101,7 @@ public final class CarrierHelper {
         }
 
         try {
-            Carrier.getInstance().sendFriendMessage(sPeerUserId, message);
+            sCarrier.sendFriendMessage(sPeerUserId, message);
             Logger.info("Carrier send message to UserId: " + sPeerUserId
                     + "\nmessage: " + message);
         } catch (Exception e) {
@@ -114,6 +117,7 @@ public final class CarrierHelper {
         return sPeerUserId;
     }
 
+    private static Carrier sCarrier;
     private static String sPeerUserId = null;
 
     private static final String CARRIER_HELLO_AUTH = "auto-auth";
