@@ -39,11 +39,11 @@ public final class CarrierSessionHelper {
         }
     }
 
-    public static CarrierSessionInfo newSessionAndStream(String peer) {
+    public static CarrierSessionInfo newSessionAndStream(String peer, CarrierSessionInfo.OnSessionReceivedDataListener listener) {
         CarrierSessionInfo sessionInfo = null;
 
         try {
-            sessionInfo = new CarrierSessionInfo();
+            sessionInfo = new CarrierSessionInfo(listener);
 
             Logger.info("Carrier new session. peer:" + peer);
             Manager carrierSessionManager = sManager;
@@ -105,9 +105,9 @@ public final class CarrierSessionHelper {
         int sent = -1;
         try {
             sent = stream.writeData(data);
-            Logger.info("Session send data to stream: " + stream
-                    + "\ndata: " + new String(data)
-                    + "\nsent: " + sent);
+//            Logger.info("Session send data to stream: " + stream
+////                    + "\ndata: " + new String(data)
+//                    + "\nsent: " + sent);
         } catch (Exception e) {
             Logger.error("Failed to send session data.", e);
         }

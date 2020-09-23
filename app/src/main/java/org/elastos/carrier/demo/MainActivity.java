@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
+import android.os.SystemClock;
+import android.provider.Settings;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -35,14 +37,21 @@ import org.elastos.carrier.Carrier;
 import org.elastos.carrier.demo.session.CarrierSessionHelper;
 import org.elastos.carrier.demo.session.CarrierSessionInfo;
 import org.elastos.carrier.session.ManagerHandler;
+import org.msgpack.core.MessageBufferPacker;
+import org.msgpack.core.MessagePack;
+import org.msgpack.core.MessageUnpacker;
+import org.msgpack.value.Value;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -109,129 +118,145 @@ public class MainActivity extends AppCompatActivity {
         });
 
         /****************************************************/
-        Button btnOpenPFServer = findViewById(R.id.btn_open_pf_svc);
-        btnOpenPFServer.setOnClickListener((view) -> {
+        Button btnSetBinary = findViewById(R.id.btn_set_binary);
+        btnSetBinary.setOnClickListener((view) -> {
             Handler handler = new Handler(mSessionThread.getLooper());
             handler.post(() -> {
-                EditText txtIpAddr = new EditText(this);
-                txtIpAddr.setHint("IP Address");
-                txtIpAddr.setText("192.168.33.60");
-                EditText txtPort = new EditText(this);
-                txtPort.setHint("Port");
-                txtPort.setText("8080");
-
-                LinearLayout root = new LinearLayout(this);
-                root.setOrientation(LinearLayout.VERTICAL);
-                root.addView(txtIpAddr);
-                root.addView(txtPort);
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("PF Server");
-                builder.setView(root);
-                builder.setNegativeButton("Cancel", (dialog, which) -> {
-                    dialog.dismiss();
-                });
-                builder.setPositiveButton("OK", (dialog, which) -> {
-                    String ipaddr = txtIpAddr.getText().toString();
-                    String port = txtPort.getText().toString();
-                    openPFServer(ipaddr, port);
-                });
-                builder.create().show();
+                setBinaryData();
             });
         });
-        Button btnOpenPFClient = findViewById(R.id.btn_open_pf_cli);
-        btnOpenPFClient.setOnClickListener((view) -> {
+        Button btnGetBinary = findViewById(R.id.btn_get_binary);
+        btnGetBinary.setOnClickListener((view) -> {
             Handler handler = new Handler(mSessionThread.getLooper());
             handler.post(() -> {
-                String localIpAddr = getLocalIpAddress();
-                EditText txtIpAddr = new EditText(this);
-                txtIpAddr.setText(localIpAddr);
-                txtIpAddr.setEnabled(false);
-                txtIpAddr.setFocusable(false);
-                txtIpAddr.setFocusableInTouchMode(false);
-                EditText txtPort = new EditText(this);
-                txtPort.setHint("Port");
-                txtPort.setText("12345");
-
-                LinearLayout root = new LinearLayout(this);
-                root.setOrientation(LinearLayout.VERTICAL);
-                root.addView(txtIpAddr);
-                root.addView(txtPort);
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("PF Client");
-                builder.setView(root);
-                builder.setNegativeButton("Cancel", (dialog, which) -> {
-                    dialog.dismiss();
-                });
-                builder.setPositiveButton("OK", (dialog, which) -> {
-                    String ipaddr = txtIpAddr.getText().toString();
-                    String port = txtPort.getText().toString();
-                    openPFClient(ipaddr, port);
-                });
-                builder.create().show();
-            });
-        });
-        Button btnClosePF = findViewById(R.id.btn_close_pf);
-        btnClosePF.setOnClickListener((view) -> {
-            Handler handler = new Handler(mSessionThread.getLooper());
-            handler.post(() -> {
-                closePF();
-            });
-        });
-        Button btnOpenPFPeerSvc = findViewById(R.id.btn_open_pf_peer_svc);
-        btnOpenPFPeerSvc.setOnClickListener((view) -> {
-            Handler handler = new Handler(mSessionThread.getLooper());
-            handler.post(() -> {
-                EditText txtIpAddr = new EditText(this);
-                txtIpAddr.setHint("IP Address");
-                txtIpAddr.setText("192.168.33.60");
-                EditText txtPort = new EditText(this);
-                txtPort.setHint("Port");
-                txtPort.setText("8080");
-
-                LinearLayout root = new LinearLayout(this);
-                root.setOrientation(LinearLayout.VERTICAL);
-                root.addView(txtIpAddr);
-                root.addView(txtPort);
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setTitle("PF Peer Server");
-                builder.setView(root);
-                builder.setNegativeButton("Cancel", (dialog, which) -> {
-                    dialog.dismiss();
-                });
-                builder.setPositiveButton("OK", (dialog, which) -> {
-                    String ipaddr = txtIpAddr.getText().toString();
-                    String port = txtPort.getText().toString();
-                    openPFPeerServer(ipaddr, port);
-                });
-                builder.create().show();
+                getBinaryData();
             });
         });
 
         /****************************************************/
-        Button btnOpenChannel = findViewById(R.id.btn_open_channel);
-        btnOpenChannel.setOnClickListener((view) -> {
-            Handler handler = new Handler(mSessionThread.getLooper());
-            handler.post(() -> {
-                openChannel();
-            });
-        });
-        Button btnSendChannelData = findViewById(R.id.btn_send_channel_data);
-        btnSendChannelData.setOnClickListener((view) -> {
-            Handler handler = new Handler(mSessionThread.getLooper());
-            handler.post(() -> {
-                sendChannelData();
-            });
-        });
-        Button btnCloseChannel = findViewById(R.id.btn_close_channel);
-        btnCloseChannel.setOnClickListener((view) -> {
-            Handler handler = new Handler(mSessionThread.getLooper());
-            handler.post(() -> {
-                closeChannel();
-            });
-        });
+//        Button btnOpenPFServer = findViewById(R.id.btn_open_pf_svc);
+//        btnOpenPFServer.setOnClickListener((view) -> {
+//            Handler handler = new Handler(mSessionThread.getLooper());
+//            handler.post(() -> {
+//                EditText txtIpAddr = new EditText(this);
+//                txtIpAddr.setHint("IP Address");
+//                txtIpAddr.setText("192.168.33.60");
+//                EditText txtPort = new EditText(this);
+//                txtPort.setHint("Port");
+//                txtPort.setText("8080");
+//
+//                LinearLayout root = new LinearLayout(this);
+//                root.setOrientation(LinearLayout.VERTICAL);
+//                root.addView(txtIpAddr);
+//                root.addView(txtPort);
+//
+//                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//                builder.setTitle("PF Server");
+//                builder.setView(root);
+//                builder.setNegativeButton("Cancel", (dialog, which) -> {
+//                    dialog.dismiss();
+//                });
+//                builder.setPositiveButton("OK", (dialog, which) -> {
+//                    String ipaddr = txtIpAddr.getText().toString();
+//                    String port = txtPort.getText().toString();
+//                    openPFServer(ipaddr, port);
+//                });
+//                builder.create().show();
+//            });
+//        });
+//        Button btnOpenPFClient = findViewById(R.id.btn_open_pf_cli);
+//        btnOpenPFClient.setOnClickListener((view) -> {
+//            Handler handler = new Handler(mSessionThread.getLooper());
+//            handler.post(() -> {
+//                String localIpAddr = getLocalIpAddress();
+//                EditText txtIpAddr = new EditText(this);
+//                txtIpAddr.setText(localIpAddr);
+//                txtIpAddr.setEnabled(false);
+//                txtIpAddr.setFocusable(false);
+//                txtIpAddr.setFocusableInTouchMode(false);
+//                EditText txtPort = new EditText(this);
+//                txtPort.setHint("Port");
+//                txtPort.setText("12345");
+//
+//                LinearLayout root = new LinearLayout(this);
+//                root.setOrientation(LinearLayout.VERTICAL);
+//                root.addView(txtIpAddr);
+//                root.addView(txtPort);
+//
+//                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//                builder.setTitle("PF Client");
+//                builder.setView(root);
+//                builder.setNegativeButton("Cancel", (dialog, which) -> {
+//                    dialog.dismiss();
+//                });
+//                builder.setPositiveButton("OK", (dialog, which) -> {
+//                    String ipaddr = txtIpAddr.getText().toString();
+//                    String port = txtPort.getText().toString();
+//                    openPFClient(ipaddr, port);
+//                });
+//                builder.create().show();
+//            });
+//        });
+//        Button btnClosePF = findViewById(R.id.btn_close_pf);
+//        btnClosePF.setOnClickListener((view) -> {
+//            Handler handler = new Handler(mSessionThread.getLooper());
+//            handler.post(() -> {
+//                closePF();
+//            });
+//        });
+//        Button btnOpenPFPeerSvc = findViewById(R.id.btn_open_pf_peer_svc);
+//        btnOpenPFPeerSvc.setOnClickListener((view) -> {
+//            Handler handler = new Handler(mSessionThread.getLooper());
+//            handler.post(() -> {
+//                EditText txtIpAddr = new EditText(this);
+//                txtIpAddr.setHint("IP Address");
+//                txtIpAddr.setText("192.168.33.60");
+//                EditText txtPort = new EditText(this);
+//                txtPort.setHint("Port");
+//                txtPort.setText("8080");
+//
+//                LinearLayout root = new LinearLayout(this);
+//                root.setOrientation(LinearLayout.VERTICAL);
+//                root.addView(txtIpAddr);
+//                root.addView(txtPort);
+//
+//                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//                builder.setTitle("PF Peer Server");
+//                builder.setView(root);
+//                builder.setNegativeButton("Cancel", (dialog, which) -> {
+//                    dialog.dismiss();
+//                });
+//                builder.setPositiveButton("OK", (dialog, which) -> {
+//                    String ipaddr = txtIpAddr.getText().toString();
+//                    String port = txtPort.getText().toString();
+//                    openPFPeerServer(ipaddr, port);
+//                });
+//                builder.create().show();
+//            });
+//        });
+
+        /****************************************************/
+//        Button btnOpenChannel = findViewById(R.id.btn_open_channel);
+//        btnOpenChannel.setOnClickListener((view) -> {
+//            Handler handler = new Handler(mSessionThread.getLooper());
+//            handler.post(() -> {
+//                openChannel();
+//            });
+//        });
+//        Button btnSendChannelData = findViewById(R.id.btn_send_channel_data);
+//        btnSendChannelData.setOnClickListener((view) -> {
+//            Handler handler = new Handler(mSessionThread.getLooper());
+//            handler.post(() -> {
+//                sendChannelData();
+//            });
+//        });
+//        Button btnCloseChannel = findViewById(R.id.btn_close_channel);
+//        btnCloseChannel.setOnClickListener((view) -> {
+//            Handler handler = new Handler(mSessionThread.getLooper());
+//            handler.post(() -> {
+//                closeChannel();
+//            });
+//        });
 
 
         /****************************************************/
@@ -396,7 +421,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        mCarrierSessionInfo = CarrierSessionHelper.newSessionAndStream(CarrierHelper.getPeerUserId());
+        mCarrierSessionInfo = CarrierSessionHelper.newSessionAndStream(CarrierHelper.getPeerUserId(), onSessionReceivedDataListener);
         if(mCarrierSessionInfo == null) {
             Log.e(Logger.TAG, "Failed to new session.");
             return;
@@ -425,6 +450,58 @@ public class MainActivity extends AppCompatActivity {
         CarrierSessionHelper.startSession(mCarrierSessionInfo);
     }
 
+    private void sendSetBinaryData() {
+        long magicNumber = 0xA5A5202008275A5AL;
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, toBytes(magicNumber));
+
+        int version = 10000;
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, toBytes(version));
+
+        byte[] head = makeProtocolSetBinaryRequestHead();
+        int headSize = head.length;
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, toBytes(headSize));
+
+        int onceSize = 1024;
+        long bodySize = onceSize * 1024; // 1MB
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, toBytes(bodySize));
+
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, head);
+
+        StringBuffer bodyBuf = new StringBuffer();
+        for(int idx = 0; idx < (onceSize / 8); idx++) {
+            bodyBuf.append("01234567");
+        }
+        String body = bodyBuf.toString();
+        int sentSize = 0;
+        Logger.info("Transfer start. timestamp=" + System.currentTimeMillis());
+        for(int idx = 0; idx < (bodySize / onceSize); idx++) {
+            int ret = CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, body.getBytes());
+            if(ret >= 0) {
+                sentSize += ret;
+            }
+        }
+        String result = (sentSize == bodySize ? "Success" : "Failed");
+        Logger.info("Transfer finished. timestamp=" + System.currentTimeMillis());
+        Logger.info(result + " to send data. size/total=" + sentSize + "/" + bodySize);
+    }
+
+    private void sendGetBinaryData() {
+        long magicNumber = 0xA5A5202008275A5AL;
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, toBytes(magicNumber));
+
+        int version = 10000;
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, toBytes(version));
+
+        byte[] head = makeProtocolGetBinaryRequestHead();
+        int headSize = head.length;
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, toBytes(headSize));
+
+        long bodySize = 0;
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, toBytes(bodySize));
+
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, head);
+    }
+
     private void sendSessionData() {
         if(mCarrierSessionInfo == null) {
             showError("Friend is not online.");
@@ -436,10 +513,59 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        for(int idx = 0; idx < 100; idx++) {
-            String msg = "Stream Message " + mMsgCounter.getAndIncrement();
-            CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
+        String msg = "Stream Message Garbage. Stream Message Garbage.";
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
+
+        for(int idx = 0; idx < 2; idx++) {
+//            sendSessionSection();
         }
+
+        msg = "Stream Message Garbage. Stream Message Garbage.";
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
+    }
+
+    private void setBinaryData() {
+        if(mCarrierSessionInfo == null) {
+            showError("Friend is not online.");
+            return;
+        }
+        boolean connected = mCarrierSessionInfo.mSessionState.isMasked(CarrierSessionInfo.SessionState.SESSION_STREAM_CONNECTED);
+        if(connected == false) {
+            showError("Session is not connected.");
+            return;
+        }
+
+        String msg = "Stream Message Garbage. Stream Message Garbage.";
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
+
+        for(int idx = 0; idx < 2; idx++) {
+            sendSetBinaryData();
+        }
+
+        msg = "Stream Message Garbage. Stream Message Garbage.";
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
+    }
+
+    private void getBinaryData() {
+        if(mCarrierSessionInfo == null) {
+            showError("Friend is not online.");
+            return;
+        }
+        boolean connected = mCarrierSessionInfo.mSessionState.isMasked(CarrierSessionInfo.SessionState.SESSION_STREAM_CONNECTED);
+        if(connected == false) {
+            showError("Session is not connected.");
+            return;
+        }
+
+        String msg = "Stream Message Garbage. Stream Message Garbage.";
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
+
+        for(int idx = 0; idx < 2; idx++) {
+            sendGetBinaryData();
+        }
+
+        msg = "Stream Message Garbage. Stream Message Garbage.";
+        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
     }
 
     private void deleteSession() {
@@ -583,7 +709,7 @@ public class MainActivity extends AppCompatActivity {
     private ManagerHandler mSessionManagerHandler = new ManagerHandler() {
         @Override
         public void onSessionRequest(Carrier carrier, String from, String sdp) {
-            CarrierSessionInfo sessionInfo = CarrierSessionHelper.newSessionAndStream(CarrierHelper.getPeerUserId());
+            CarrierSessionInfo sessionInfo = CarrierSessionHelper.newSessionAndStream(CarrierHelper.getPeerUserId(), onSessionReceivedDataListener);
             if(sessionInfo == null) {
                 Logger.error("Failed to new session.");
                 return;
@@ -695,6 +821,135 @@ public class MainActivity extends AppCompatActivity {
 
         return null;
     }
+
+//    private long hton(long value) {
+//        if (ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN)) {
+//            return value;
+//        }
+//        return Long.reverseBytes(value);
+//    }
+//
+//    private int hton(int value) {
+//        if (ByteOrder.nativeOrder().equals(ByteOrder.BIG_ENDIAN)) {
+//            return value;
+//        }
+//        return Integer.reverseBytes(value);
+//    }
+
+    public byte[] toBytes(long value) {
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.putLong(0, value);
+        return buffer.array();
+    }
+
+    public byte[] toBytes(int value) {
+        ByteBuffer buffer = ByteBuffer.allocate(Integer.BYTES);
+        buffer.putInt(0, value);
+        return buffer.array();
+    }
+
+    public long toLong(byte[] value) {
+        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+        buffer.put(value, 0, value.length);
+        buffer.flip(); //need flip
+        return buffer.getLong();
+    }
+
+    private byte[] makeProtocolSetBinaryRequestHead() {
+        SetBinaryRequest req = new SetBinaryRequest();
+        MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
+        try {
+            packer.packMapHeader(4)
+                        .packString("version").packString(req.version)
+                        .packString("method").packString(req.method)
+                        .packString("id").packInt(req.jsonrpc_id)
+                        .packString("params").packMapHeader(4)
+                            .packString("access_token").packString(req.params.access_token)
+                            .packString("key").packString(req.params.key)
+                            .packString("algo").packString(req.params.algo)
+                            .packString("checksum").packString(req.params.checksum);
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (IOException e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        return packer.toByteArray();
+    }
+
+    private byte[] makeProtocolGetBinaryRequestHead() {
+        GetBinaryRequest req = new GetBinaryRequest();
+        MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
+        try {
+            packer.packMapHeader(4)
+                    .packString("version").packString(req.version)
+                    .packString("method").packString(req.method)
+                    .packString("id").packInt(req.jsonrpc_id)
+                    .packString("params").packMapHeader(2)
+                        .packString("access_token").packString(req.params.access_token)
+                        .packString("key").packString(req.params.key);
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (IOException e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        return packer.toByteArray();
+    }
+
+    class SetBinaryRequest {
+        String version = "1.1.3";
+        String method = "set_binary";
+        int jsonrpc_id = 1010301;
+        Params params = new Params();
+
+        class Params {
+            String access_token= "access_token-test";
+            String key         = "key-test";
+            String algo        = "None";
+            String checksum    = "";
+        }
+    }
+    class SetBinaryResponse {
+        long tsx_id = 1010302;
+        Result result = new Result();
+
+        class Result {
+            String key         = "key-test";
+            int errCode        = 0;
+        }
+    }
+
+    class GetBinaryRequest {
+        String version = "1.1.3";
+        String method = "get_binary";
+        int jsonrpc_id = 1010302;
+        Params params = new Params();
+
+        class Params {
+            String access_token= "access_token-test";
+            String key         = "key-test";
+        }
+    }
+    class GetBinaryResponse {
+        long tsx_id = 1010302;
+        Result result = new Result();
+
+        class Result {
+            String key         = "key-test";
+            String algo        = "None";
+            String checksum    = "";
+            int errCode        = 0;
+        }
+    }
+
+    CarrierSessionInfo.OnSessionReceivedDataListener onSessionReceivedDataListener = data -> {
+//        StringBuilder sb = new StringBuilder(data.length * 2);
+//        for(byte b: data)
+//            sb.append(String.format("%02x", b));
+//        Logger.info("SessionReceivedData: \n" + sb.toString());
+        Logger.info("SessionReceivedData: size=" + data.length);
+    };
 
     private HandlerThread mSessionThread;
     private CarrierSessionInfo mCarrierSessionInfo;

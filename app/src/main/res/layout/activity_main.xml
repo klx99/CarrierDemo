@@ -49,39 +49,51 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content" >
-            <Button android:id="@+id/btn_open_pf_svc"
+            <Button android:id="@+id/btn_set_binary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Open\nPF Server"/>
-            <Button android:id="@+id/btn_open_pf_cli"
+                android:text="Set Binary\nData"/>
+            <Button android:id="@+id/btn_get_binary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Open\nPF Client"/>
-            <Button android:id="@+id/btn_close_pf"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Close\nPF"/>
-            <Button android:id="@+id/btn_open_pf_peer_svc"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Open\nPF Peer Svc"/>
+                android:text="Get Binary\nData"/>
         </LinearLayout>
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" >
-            <Button android:id="@+id/btn_open_channel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Open\nChannel"/>
-            <Button android:id="@+id/btn_send_channel_data"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Send\nChannel Data"/>
-            <Button android:id="@+id/btn_close_channel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Close\nChannel"/>
-        </LinearLayout>
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content" >-->
+<!--            <Button android:id="@+id/btn_open_pf_svc"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Open\nPF Server"/>-->
+<!--            <Button android:id="@+id/btn_open_pf_cli"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Open\nPF Client"/>-->
+<!--            <Button android:id="@+id/btn_close_pf"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Close\nPF"/>-->
+<!--            <Button android:id="@+id/btn_open_pf_peer_svc"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Open\nPF Peer Svc"/>-->
+<!--        </LinearLayout>-->
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content" >-->
+<!--            <Button android:id="@+id/btn_open_channel"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Open\nChannel"/>-->
+<!--            <Button android:id="@+id/btn_send_channel_data"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Send\nChannel Data"/>-->
+<!--            <Button android:id="@+id/btn_close_channel"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Close\nChannel"/>-->
+<!--        </LinearLayout>-->
     </LinearLayout>
 
     <TextView android:id="@+id/txt_message"
