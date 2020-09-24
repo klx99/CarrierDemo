@@ -898,7 +898,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     class SetBinaryRequest {
-        String version = "1.1.3";
+        String version = "1.0";
         String method = "set_binary";
         int jsonrpc_id = 1010301;
         Params params = new Params();
@@ -916,12 +916,11 @@ public class MainActivity extends AppCompatActivity {
 
         class Result {
             String key         = "key-test";
-            int errCode        = 0;
         }
     }
 
     class GetBinaryRequest {
-        String version = "1.1.3";
+        String version = "1.0";
         String method = "get_binary";
         int jsonrpc_id = 1010302;
         Params params = new Params();
@@ -939,7 +938,6 @@ public class MainActivity extends AppCompatActivity {
             String key         = "key-test";
             String algo        = "None";
             String checksum    = "";
-            int errCode        = 0;
         }
     }
 
