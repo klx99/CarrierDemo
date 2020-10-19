@@ -133,6 +133,14 @@ public class MainActivity extends AppCompatActivity {
             });
         });
 
+        Button btnGetVersion = findViewById(R.id.btn_get_service_version);
+        btnGetVersion.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                getVersion();
+            });
+        });
+
         /****************************************************/
 //        Button btnOpenPFServer = findViewById(R.id.btn_open_pf_svc);
 //        btnOpenPFServer.setOnClickListener((view) -> {
@@ -451,7 +459,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendSetBinaryData() {
-        long magicNumber = 0xA5A5202008275A5AL;
+        long magicNumber = 0x0000A5202008275AL;
         CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, toBytes(magicNumber));
 
         int version = 10000;
@@ -566,6 +574,30 @@ public class MainActivity extends AppCompatActivity {
 
         msg = "Stream Message Garbage. Stream Message Garbage.";
         CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
+    }
+
+    private void getVersion() {
+        if(CarrierHelper.getPeerUserId() == null) {
+            showError("Friend is not online.");
+            return;
+        }
+
+        GetVersionRequest req = new GetVersionRequest();
+        MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
+        try {
+            packer.packMapHeader(4)
+                    .packString("version").packString(req.version)
+                    .packString("method").packString(req.method)
+                    .packString("id").packInt(req.jsonrpc_id)
+                    .packString("params").packMapHeader(1)
+                    .packString("access_token").packString(req.params.access_token);
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (IOException e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        CarrierHelper.sendMessage(packer.toByteArray());
     }
 
     private void deleteSession() {
@@ -941,11 +973,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    class GetVersionRequest {
+        String version = "1.0";
+        String method = "get_service_version";
+        int jsonrpc_id = 1010302;
+        Params params = new Params();
+
+        class Params {
+            String access_token= "access_token-test";
+        }
+    }
+
     CarrierSessionInfo.OnSessionReceivedDataListener onSessionReceivedDataListener = data -> {
-//        StringBuilder sb = new StringBuilder(data.length * 2);
-//        for(byte b: data)
-//            sb.append(String.format("%02x", b));
-//        Logger.info("SessionReceivedData: \n" + sb.toString());
+        StringBuilder sb = new StringBuilder(data.length * 2);
+        for(byte b: data)
+            sb.append(String.format("%02x", b));
+        Logger.info("SessionReceivedData: \n" + sb.toString());
         Logger.info("SessionReceivedData: size=" + data.length);
     };
 

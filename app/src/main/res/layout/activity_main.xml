@@ -57,6 +57,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Get Binary\nData"/>
+            <Button android:id="@+id/btn_get_service_version"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Get\nVersion"/>
         </LinearLayout>
 <!--        <LinearLayout-->
 <!--            android:layout_width="match_parent"-->

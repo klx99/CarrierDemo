@@ -52,6 +52,11 @@ public class DefaultCarrierHandler extends AbstractCarrierHandler {
                                 Date timestamp, boolean isOffline) {
         Logger.info("Carrier receiver message from UserId: " + from
                 + "\nmessage: " + new String(message));
+        StringBuilder sb = new StringBuilder(message.length * 2);
+        for(byte b: message)
+            sb.append(String.format("%02x", b));
+        Logger.info("ReceivedMessage: \n" + sb.toString());
+
     }
 }
 

@@ -109,6 +109,21 @@ public final class CarrierHelper {
         }
     }
 
+    public static void sendMessage(byte[] message) {
+        if(sPeerUserId == null) {
+            Logger.error("Failed to send message, friend not found.");
+            return;
+        }
+
+        try {
+            sCarrier.sendFriendMessage(sPeerUserId, message);
+            Logger.info("Carrier send message to UserId: " + sPeerUserId
+                    + "\nmessage: " + message);
+        } catch (Exception e) {
+            Logger.error("Failed to send message.", e);
+        }
+    }
+
     public static void setPeerUserId(String peerUserId) {
         sPeerUserId = peerUserId;
     }
