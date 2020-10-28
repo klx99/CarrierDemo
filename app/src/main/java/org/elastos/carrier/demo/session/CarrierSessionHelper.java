@@ -1,8 +1,7 @@
 package org.elastos.carrier.demo.session;
 
-import org.elastos.carrier.Carrier;
-import org.elastos.carrier.demo.CarrierHelper;
 import org.elastos.carrier.demo.Logger;
+import org.elastos.carrier.demo.carrier.CarrierHelper;
 import org.elastos.carrier.session.Manager;
 import org.elastos.carrier.session.ManagerHandler;
 import org.elastos.carrier.session.PortForwardingProtocol;
@@ -11,6 +10,11 @@ import org.elastos.carrier.session.StreamType;
 
 public final class CarrierSessionHelper {
     private CarrierSessionHelper() {}
+
+    public interface Listener {
+        void onStatus(boolean connected);
+        void onReceivedData(byte[] data);
+    }
 
     public static void initSessionManager(ManagerHandler handler) {
         try {
@@ -39,7 +43,7 @@ public final class CarrierSessionHelper {
         }
     }
 
-    public static CarrierSessionInfo newSessionAndStream(String peer, CarrierSessionInfo.OnSessionReceivedDataListener listener) {
+    public static CarrierSessionInfo newSessionAndStream(String peer, CarrierSessionHelper.Listener listener) {
         CarrierSessionInfo sessionInfo = null;
 
         try {

@@ -7,7 +7,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.util.Log;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -23,17 +25,23 @@ import com.google.zxing.MultiFormatWriter;
 import com.google.zxing.common.BitMatrix;
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
+import org.elastos.carrier.demo.carrier.CarrierHelper;
 import org.elastos.carrier.demo.session.CarrierSessionHelper;
 import org.elastos.carrier.demo.session.CarrierSessionInfo;
 import org.elastos.carrier.session.ManagerHandler;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class MenuHelper {
     public static class Carrier {
@@ -60,20 +68,20 @@ public class MenuHelper {
                 Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
                 bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
 
-                ImageView image = new ImageView(mMainActivity);
+                ImageView image = new ImageView(mainActivity);
                 image.setImageBitmap(bitmap);
 
-                TextView txt = new TextView(mMainActivity);
+                TextView txt = new TextView(mainActivity);
                 txt.setText(address);
 
-                LinearLayout root = new LinearLayout(mMainActivity);
+                LinearLayout root = new LinearLayout(mainActivity);
                 root.setOrientation(LinearLayout.VERTICAL);
                 root.addView(image);
                 root.addView(txt);
                 ViewGroup.MarginLayoutParams txtLayout = (ViewGroup.MarginLayoutParams) txt.getLayoutParams();
                 txtLayout.setMargins(100, 100, 100, 100);
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(mMainActivity);
+                AlertDialog.Builder builder = new AlertDialog.Builder(mainActivity);
                 builder.setMessage("My Address");
                 builder.setPositiveButton("OK", (dialog, which) -> {
                     dialog.dismiss();
@@ -90,16 +98,16 @@ public class MenuHelper {
             if(content != null) {
                 Intent data = new Intent();
                 data.putExtra(QR_SCAN_KEY, content);
-                mMainActivity.onActivityResult(REQUEST_CODE_QR_SCAN, Activity.RESULT_OK, data);
+                mainActivity.onActivityResult(REQUEST_CODE_QR_SCAN, Activity.RESULT_OK, data);
                 return;
             }
 
-            int hasCameraPermission = ActivityCompat.checkSelfPermission(mMainActivity, Manifest.permission.CAMERA);
+            int hasCameraPermission = ActivityCompat.checkSelfPermission(mainActivity, Manifest.permission.CAMERA);
             if(hasCameraPermission == PackageManager.PERMISSION_GRANTED) {
-                Intent intent = new Intent(mMainActivity, QrCodeActivity.class);
-                mMainActivity.startActivityForResult(intent, REQUEST_CODE_QR_SCAN);
+                Intent intent = new Intent(mainActivity, QrCodeActivity.class);
+                mainActivity.startActivityForResult(intent, REQUEST_CODE_QR_SCAN);
             } else {
-                ActivityCompat.requestPermissions(mMainActivity,
+                ActivityCompat.requestPermissions(mainActivity,
                         new String[]{Manifest.permission.CAMERA},
                         2);
             }
@@ -111,7 +119,7 @@ public class MenuHelper {
 
         public static void SendMessage() {
             if(CarrierHelper.getPeerUserId() == null) {
-                mMainActivity.showError("Friend is not online.");
+                mainActivity.showError("Friend is not online.");
                 return;
             }
 
@@ -121,7 +129,7 @@ public class MenuHelper {
 
         public static void SendCommand(RPC.Type type) {
             if(CarrierHelper.getPeerUserId() == null) {
-                mMainActivity.showError("Friend is not online.");
+                mainActivity.showError("Friend is not online.");
                 return;
             }
 
@@ -139,16 +147,22 @@ public class MenuHelper {
 
     public static class Session {
         public static void CreateSession() {
-            if(CarrierHelper.getPeerUserId() == null) {
-                mMainActivity.showError("Friend is not online.");
-                return;
-            }
-            if(mCarrierSessionInfo != null) {
-                mMainActivity.showError("Session has been created.");
+            if(Looper.myLooper() != sessionThread.getLooper()) {
+                Handler handler = new Handler(sessionThread.getLooper());
+                handler.post(() -> CreateSession());
                 return;
             }
 
-            mCarrierSessionInfo = CarrierSessionHelper.newSessionAndStream(CarrierHelper.getPeerUserId(), onSessionReceivedDataListener);
+            if(CarrierHelper.getPeerUserId() == null) {
+                mainActivity.showError("Friend is not online.");
+                return;
+            }
+            if(mCarrierSessionInfo != null) {
+                mainActivity.showError("Session has been created.");
+                return;
+            }
+
+            mCarrierSessionInfo = CarrierSessionHelper.newSessionAndStream(CarrierHelper.getPeerUserId(), carrierSessionListener);
             if(mCarrierSessionInfo == null) {
                 Log.e(Logger.TAG, "Failed to new session.");
                 return;
@@ -178,6 +192,12 @@ public class MenuHelper {
         }
 
         public static void DeleteSession() {
+            if(Looper.myLooper() != sessionThread.getLooper()) {
+                Handler handler = new Handler(sessionThread.getLooper());
+                handler.post(() -> DeleteSession());
+                return;
+            }
+
             if(mCarrierSessionInfo == null) {
                 return;
             }
@@ -187,13 +207,19 @@ public class MenuHelper {
         }
 
         public static void WriteData() {
+            if(Looper.myLooper() != sessionThread.getLooper()) {
+                Handler handler = new Handler(sessionThread.getLooper());
+                handler.post(() -> WriteData());
+                return;
+            }
+
             if(mCarrierSessionInfo == null) {
-                mMainActivity.showError("Friend is not online.");
+                mainActivity.showError("Friend is not online.");
                 return;
             }
             boolean connected = mCarrierSessionInfo.mSessionState.isMasked(CarrierSessionInfo.SessionState.SESSION_STREAM_CONNECTED);
             if(connected == false) {
-                mMainActivity.showError("Session is not connected.");
+                mainActivity.showError("Session is not connected.");
                 return;
             }
 
@@ -204,55 +230,55 @@ public class MenuHelper {
             CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
         }
 
-        public static void SetBinaryData() {
+        public static void SendCommand(RPC.Type type) {
+            if(Looper.myLooper() != sessionThread.getLooper()) {
+                Handler handler = new Handler(sessionThread.getLooper());
+                handler.post(() -> SendCommand(type));
+                return;
+            }
+
             if(mCarrierSessionInfo == null) {
-                mMainActivity.showError("Friend is not online.");
+                mainActivity.showError("Friend is not online.");
                 return;
             }
             boolean connected = mCarrierSessionInfo.mSessionState.isMasked(CarrierSessionInfo.SessionState.SESSION_STREAM_CONNECTED);
             if(connected == false) {
-                mMainActivity.showError("Session is not connected.");
+                mainActivity.showError("Session is not connected.");
                 return;
             }
 
-            String msg = "Stream Message Garbage. Stream Message Garbage.";
-//        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
-
-            for(int idx = 0; idx < 2; idx++) {
-                SetBinaryDataOnce();
+            int bodySizeKB = 0;
+            if(type == RPC.Type.SetBinary) {
+                bodySizeKB = 1024;
             }
 
-            msg = "Stream Message Garbage. Stream Message Garbage.";
-//        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
+            for(int idx = 0; idx < 2; idx++) {
+                SendCommandProtocol(type, bodySizeKB);
+                if(bodySizeKB >= 0) {
+                    SendCommandBody(bodySizeKB);
+                }
+            }
         }
 
         private Session() {}
         private static CarrierSessionInfo mCarrierSessionInfo;
-        private static CarrierSessionInfo.OnSessionReceivedDataListener onSessionReceivedDataListener = data -> {
-            StringBuilder sb = new StringBuilder(data.length * 2);
-            for(byte b: data)
-                sb.append(String.format("%02x", b));
-            Logger.info("SessionReceivedData: \n" + sb.toString());
-            Logger.info("SessionReceivedData: size=" + data.length);
-        };
 
-        private static void SetBinaryDataOnce() {
-            long magicNumber = 0x0000A5202008275AL;
-            CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, ToBytes(magicNumber));
+        private static void SendCommandProtocol(RPC.Type type, int bodySizeKB) {
+            CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, ToBytes(MagicNumber));
+            CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, ToBytes(Version));
 
-            int version = 10000;
-            CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, ToBytes(version));
-
-            RPC.SetBinaryRequest req = new RPC.SetBinaryRequest();
-            byte[] head = MsgPackHelper.PackData(req);
-            int headSize = head.length;
+            RPC.Request req = RPC.MakeRequest(type);
+            byte[] headData = MsgPackHelper.PackData(req);
+            int headSize = headData.length;
+            long bodySize = bodySizeKB * 1024;
             CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, ToBytes(headSize));
-
-            int onceSize = 1024;
-            long bodySize = onceSize * 1024; // 1MB
             CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, ToBytes(bodySize));
 
-            CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, head);
+            CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, headData);
+        }
+
+        private static void SendCommandBody(int bodySizeKB) {
+            int onceSize = 1024;
 
             StringBuffer bodyBuf = new StringBuffer();
             for(int idx = 0; idx < (onceSize / 8); idx++) {
@@ -261,15 +287,15 @@ public class MenuHelper {
             String body = bodyBuf.toString();
             int sentSize = 0;
             Logger.info("Transfer start. timestamp=" + System.currentTimeMillis());
-            for(int idx = 0; idx < (bodySize / onceSize); idx++) {
+            for(int idx = 0; idx < bodySizeKB; idx++) {
                 int ret = CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, body.getBytes());
                 if(ret >= 0) {
                     sentSize += ret;
                 }
             }
-            String result = (sentSize == bodySize ? "Success" : "Failed");
+            String result = (sentSize == (bodySizeKB * onceSize) ? "Success" : "Failed");
             Logger.info("Transfer finished. timestamp=" + System.currentTimeMillis());
-            Logger.info(result + " to send data. size/total=" + sentSize + "/" + bodySize);
+            Logger.info(result + " to send data. size/total=" + sentSize + "/" + (bodySizeKB * onceSize));
         }
 
         public static byte[] ToBytes(long value) {
@@ -284,22 +310,41 @@ public class MenuHelper {
             return buffer.array();
         }
 
-        public static long ToLong(byte[] value) {
-            ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-            buffer.put(value, 0, value.length);
-            buffer.flip(); //need flip
-            return buffer.getLong();
-        }
 
+        static int ProtocolSize = 32;
+        static long MagicNumber = 0x0000A5202008275AL;
+        static int Version = 10000;
     }
 
-    public static void Init(MainActivity activity, CarrierHelper.Listener listener) {
-        mMainActivity = activity;
+    public static void Init(MainActivity activity,
+                            CarrierHelper.Listener carrierListener,
+                            CarrierSessionHelper.Listener sessionListener) {
+        MenuHelper.mainActivity = activity;
+        MenuHelper.carrierSessionListener = new CarrierSessionHelper.Listener() {
+            @Override
+            public void onStatus(boolean connected) {
+                Handler handler = new Handler(sessionThread.getLooper());
+                handler.post(() -> {
+                    sessionListener.onStatus(connected);
+                });
+            }
+            @Override
+            public void onReceivedData(byte[] data) {
+                Handler handler = new Handler(sessionThread.getLooper());
+                handler.post(() -> {
+                    sessionParser.unpack(data, (headData) -> {
+                        sessionListener.onReceivedData(headData);
+                    });
+                });
+            }
 
-        mSessionThread = new HandlerThread("CarrierHandleThread");
-        mSessionThread.start();
+            private SessionParser sessionParser = new SessionParser();
+        };
 
-        CarrierHelper.startCarrier(activity, listener);
+        sessionThread = new HandlerThread("CarrierHandleThread");
+        sessionThread.start();
+
+        CarrierHelper.startCarrier(activity, carrierListener);
         CarrierSessionHelper.initSessionManager(mSessionManagerHandler);
     }
 
@@ -307,9 +352,34 @@ public class MenuHelper {
         CarrierSessionHelper.cleanupSessionManager();
         CarrierHelper.stopCarrier();
 
-        mSessionThread.quit();
-        mSessionThread = null;
-        mMainActivity = null;
+        sessionThread.quit();
+        sessionThread = null;
+        mainActivity = null;
+    }
+
+    private class SessionProtocol {
+        class Info {
+            long magicNumber;
+            int version;
+            int headSize;
+            long bodySize;
+        };
+        class Payload {
+            class BodyData {
+//                std::filesystem::path filepath;
+//                std::fstream stream;
+                long receivedBodySize;
+            }
+
+            byte[] headData;
+            BodyData bodyData;
+        }
+
+        Info info = new Info();
+        Payload payload = new Payload();
+
+        static final long MagicNumber = 0x00A5202008275AL;
+        static final int Version_01_00_00 = 10000;
     }
 
     private MenuHelper() {}
@@ -351,7 +421,7 @@ public class MenuHelper {
     private static ManagerHandler mSessionManagerHandler = new ManagerHandler() {
         @Override
         public void onSessionRequest(org.elastos.carrier.Carrier carrier, String from, String sdp) {
-            CarrierSessionInfo sessionInfo = CarrierSessionHelper.newSessionAndStream(CarrierHelper.getPeerUserId(), Session.onSessionReceivedDataListener);
+            CarrierSessionInfo sessionInfo = CarrierSessionHelper.newSessionAndStream(CarrierHelper.getPeerUserId(), carrierSessionListener);
             if(sessionInfo == null) {
                 Logger.error("Failed to new session.");
                 return;
@@ -380,6 +450,7 @@ public class MenuHelper {
     };
 
 
-    private static MainActivity mMainActivity;
-    private static HandlerThread mSessionThread;
+    private static MainActivity mainActivity;
+    private static CarrierSessionHelper.Listener carrierSessionListener;
+    private static HandlerThread sessionThread;
 }

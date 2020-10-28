@@ -1,10 +1,11 @@
-package org.elastos.carrier.demo;
+package org.elastos.carrier.demo.carrier;
 
 import org.elastos.carrier.AbstractCarrierHandler;
 import org.elastos.carrier.Carrier;
 import org.elastos.carrier.ConnectionStatus;
 import org.elastos.carrier.FriendInfo;
 import org.elastos.carrier.UserInfo;
+import org.elastos.carrier.demo.Logger;
 
 import java.util.Date;
 import java.util.List;

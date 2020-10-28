@@ -107,18 +107,18 @@ public class CarrierSessionInfo {
         private static final Object mLocker = new Object();
     }
 
-    public interface OnSessionReceivedDataListener {
-        void onStreamData(byte[] data);
-    }
-
-    public CarrierSessionInfo(OnSessionReceivedDataListener listener) {
-        onSessionReceivedDataListener = listener;
+    public CarrierSessionInfo(CarrierSessionHelper.Listener listener) {
+        sessionListener = listener;
 
         mSessionHandler = new DefaultSessionHandler();
         mSessionListener = new DefaultSessionHandler.OnSessionListener() {
             @Override
             public void onStateChanged(Stream stream, StreamState streamState) {
                 setStreamState(stream, streamState);
+
+                if(sessionListener != null) {
+                    sessionListener.onStatus(streamState == StreamState.Connected);
+                }
             }
 
             @Override
@@ -135,8 +135,8 @@ public class CarrierSessionInfo {
 ////                        + "\ndata: " + dataStr
 //                        + "\nlen: " + data.length);
 
-                if(onSessionReceivedDataListener != null) {
-                    onSessionReceivedDataListener.onStreamData(data);
+                if(sessionListener != null) {
+                    sessionListener.onReceivedData(data);
                 }
 
                 if(dataStr.startsWith("addServer")) {
@@ -185,7 +185,7 @@ public class CarrierSessionInfo {
     public int mPortForwarding = -1;
     public int mChannel = -1;
     public String mSdp;
-    private OnSessionReceivedDataListener onSessionReceivedDataListener;
+    private CarrierSessionHelper.Listener sessionListener;
 
     private void setStreamState(Stream stream, StreamState streamState) {
         Logger.info("Carrier session stream " + stream + " state change to: " + streamState);

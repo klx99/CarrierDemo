@@ -1,4 +1,4 @@
-package org.elastos.carrier.demo;
+package org.elastos.carrier.demo.carrier;
 
 import java.util.ArrayList;
 

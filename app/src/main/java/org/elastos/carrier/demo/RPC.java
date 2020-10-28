@@ -8,7 +8,9 @@ public class RPC {
         SetBinary,
         GetBinary,
         GetVersion,
-        ReportIllegalComment
+        ReportIllegalComment,
+        BlockComment,
+        GetReportedComments,
     }
 
     static Request MakeRequest(Type type) {

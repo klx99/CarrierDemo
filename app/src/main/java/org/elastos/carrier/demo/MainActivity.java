@@ -19,7 +19,8 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuCompat;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import org.elastos.carrier.demo.carrier.CarrierHelper;
+import org.elastos.carrier.demo.session.CarrierSessionHelper;
 
 public class MainActivity extends AppCompatActivity {
     @Override
@@ -30,7 +31,7 @@ public class MainActivity extends AppCompatActivity {
         txtMsg.setMovementMethod(new ScrollingMovementMethod());
         Logger.init(txtMsg);
 
-        MenuHelper.Init(this, mCarrierListener);
+        MenuHelper.Init(this, carrierListener, sessionListener);
     }
 
     @Override
@@ -53,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         MenuCompat.setGroupDividerEnabled(menu, true);
-        mOptionsMenu = menu;
+        optionsMenu = menu;
 
         return true;
     }
@@ -93,6 +94,15 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_carrier_get_version:
                 type = RPC.Type.GetVersion;
                 break;
+            case R.id.action_carrier_report_comment:
+                type = RPC.Type.ReportIllegalComment;
+                break;
+//            case R.id.action_carrier_block_comment:
+//                type = RPC.Type.BlockComment;
+//                break;
+//            case R.id.action_carrier_get_reported_comments:
+//                type = RPC.Type.GetReportedComments;
+//                break;
         }
         if(type != null) {
             MenuHelper.Carrier.SendCommand(type);
@@ -100,12 +110,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         switch (id) {
-            case R.id.action_session_set_bindata:
-                MenuHelper.Session.SetBinaryData();
-                break;
+        case R.id.action_session_set_bindata:
+            type = RPC.Type.SetBinary;
+            break;
         }
         if(type != null) {
-//            MenuHelper.Session.SendCommand(type);
+            MenuHelper.Session.SendCommand(type);
             return true;
         }
 
@@ -177,16 +187,16 @@ public class MainActivity extends AppCompatActivity {
         builder.create().show();
     }
 
-    CarrierHelper.Listener mCarrierListener = new CarrierHelper.Listener() {
+    CarrierHelper.Listener carrierListener = new CarrierHelper.Listener() {
         @Override
         public void onStatus(boolean online) {
             Handler handler = new Handler(Looper.getMainLooper());
             handler.post(() -> {
                 if(online == false) {
-                    mOptionsMenu.setGroupEnabled(R.id.group_carrier, false);
+                    optionsMenu.setGroupEnabled(R.id.group_carrier, false);
                 } else {
-                    mOptionsMenu.findItem(R.id.action_carrier_my_address).setEnabled(true);
-                    mOptionsMenu.findItem(R.id.action_carrier_scan_address).setEnabled(true);
+                    optionsMenu.findItem(R.id.action_carrier_my_address).setEnabled(true);
+                    optionsMenu.findItem(R.id.action_carrier_scan_address).setEnabled(true);
                 }
             });
         }
@@ -195,11 +205,14 @@ public class MainActivity extends AppCompatActivity {
         public void onFriendStatus(boolean online) {
             Handler handler = new Handler(Looper.getMainLooper());
             handler.post(() -> {
-                mOptionsMenu.findItem(R.id.action_carrier_send_message).setEnabled(online);
-                mOptionsMenu.findItem(R.id.action_carrier_get_version).setEnabled(online);
-                mOptionsMenu.findItem(R.id.action_carrier_report_comment).setEnabled(online);
-                mOptionsMenu.findItem(R.id.action_carrier_block_comment).setEnabled(online);
-                mOptionsMenu.findItem(R.id.action_carrier_get_reported_comments).setEnabled(online);
+                optionsMenu.findItem(R.id.action_carrier_send_message).setEnabled(online);
+                optionsMenu.findItem(R.id.action_carrier_get_version).setEnabled(online);
+                optionsMenu.findItem(R.id.action_carrier_report_comment).setEnabled(online);
+                optionsMenu.findItem(R.id.action_carrier_block_comment).setEnabled(online);
+                optionsMenu.findItem(R.id.action_carrier_get_reported_comments).setEnabled(online);
+
+                optionsMenu.findItem(R.id.action_session_create).setEnabled(online);
+                optionsMenu.findItem(R.id.action_session_destroy).setEnabled(online);
             });
         }
 
@@ -215,5 +228,34 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    Menu mOptionsMenu;
+    CarrierSessionHelper.Listener sessionListener = new CarrierSessionHelper.Listener() {
+        @Override
+        public void onStatus(boolean connected) {
+            Handler handler = new Handler(Looper.getMainLooper());
+            handler.post(() -> {
+                if(connected == false) {
+                    MenuItem itemCreate = optionsMenu.findItem(R.id.action_session_create);
+                    boolean actionEnabled = itemCreate.isEnabled();
+                    optionsMenu.setGroupEnabled(R.id.group_session, false);
+                    optionsMenu.findItem(R.id.action_session_create).setEnabled(actionEnabled);
+                    optionsMenu.findItem(R.id.action_session_destroy).setEnabled(actionEnabled);
+                } else {
+                    optionsMenu.setGroupEnabled(R.id.group_session, true);
+                }
+            });
+        }
+
+        @Override
+        public void onReceivedData(byte[] data) {
+            RPC.Response resp = MsgPackHelper.UnpackData(data);
+            if(resp == null) {
+                Logger.info("Failed to unpack received data.");
+                return;
+            }
+
+            Logger.info(resp.toString());
+        }
+    };
+
+    Menu optionsMenu;
 }
