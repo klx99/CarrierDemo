@@ -61,6 +61,22 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Get\nVersion"/>
+            <Button android:id="@+id/btn_report_illegal_comment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Report\nComment"/>
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+            <Button android:id="@+id/btn_block_comment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Block\nComment"/>
+            <Button android:id="@+id/btn_get_reported_comments"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Get Reported\nComments"/>
         </LinearLayout>
 <!--        <LinearLayout-->
 <!--            android:layout_width="match_parent"-->

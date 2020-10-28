@@ -141,6 +141,34 @@ public class MainActivity extends AppCompatActivity {
             });
         });
 
+        Button btnReportComment = findViewById(R.id.btn_report_illegal_comment);
+        btnReportComment.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                reportIllegalComment();
+            });
+        });
+
+        Button btnBlockComment = findViewById(R.id.btn_block_comment);
+        btnBlockComment.setOnClickListener((view) -> {
+            String hint = btnBlockComment.getText().toString();
+            boolean blockOrUnblock = hint.startsWith("Block");
+            btnBlockComment.setText(blockOrUnblock ? "Unblock\nComment" : "Block\nComment");
+
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                blockOrUnblockComment(blockOrUnblock);
+            });
+        });
+
+        Button btnGetReportedComments = findViewById(R.id.btn_get_reported_comments);
+        btnGetReportedComments.setOnClickListener((view) -> {
+            Handler handler = new Handler(mSessionThread.getLooper());
+            handler.post(() -> {
+                getReportedComments();
+            });
+        });
+
         /****************************************************/
 //        Button btnOpenPFServer = findViewById(R.id.btn_open_pf_svc);
 //        btnOpenPFServer.setOnClickListener((view) -> {
@@ -544,14 +572,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         String msg = "Stream Message Garbage. Stream Message Garbage.";
-        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
+//        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
 
         for(int idx = 0; idx < 2; idx++) {
             sendSetBinaryData();
         }
 
         msg = "Stream Message Garbage. Stream Message Garbage.";
-        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
+//        CarrierSessionHelper.sendData(mCarrierSessionInfo.mStream, msg.getBytes());
     }
 
     private void getBinaryData() {
@@ -591,6 +619,87 @@ public class MainActivity extends AppCompatActivity {
                     .packString("id").packInt(req.jsonrpc_id)
                     .packString("params").packMapHeader(1)
                     .packString("access_token").packString(req.params.access_token);
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (IOException e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        CarrierHelper.sendMessage(packer.toByteArray());
+    }
+
+    private void reportIllegalComment() {
+        if(CarrierHelper.getPeerUserId() == null) {
+            showError("Friend is not online.");
+            return;
+        }
+
+        MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
+        try {
+            packer.packMapHeader(4)
+                .packString("version").packString("1.0")
+                .packString("method").packString("report_illegal_comment")
+                .packString("id").packInt(12345)
+                .packString("params").packMapHeader(5)
+                    .packString("access_token").packString("access-token-test")
+                    .packString("channel_id").packLong(1)
+                    .packString("post_id").packLong(2)
+                    .packString("comment_id").packLong(1)
+                    .packString("reasons").packString("just a joke");
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (IOException e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        CarrierHelper.sendMessage(packer.toByteArray());
+    }
+
+    private void blockOrUnblockComment(boolean blockOrUnblock) {
+        if(CarrierHelper.getPeerUserId() == null) {
+            showError("Friend is not online.");
+            return;
+        }
+
+        MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
+        try {
+            String method = blockOrUnblock ? "block_comment" : "unblock_comment";
+            packer.packMapHeader(4)
+                    .packString("version").packString("1.0")
+                    .packString("method").packString(method)
+                    .packString("id").packInt(12345)
+                    .packString("params").packMapHeader(4)
+                    .packString("access_token").packString("access-token-test")
+                    .packString("channel_id").packLong(1)
+                    .packString("post_id").packLong(2)
+                    .packString("comment_id").packLong(1);
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (IOException e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        CarrierHelper.sendMessage(packer.toByteArray());
+    }
+
+    private void getReportedComments() {
+        if(CarrierHelper.getPeerUserId() == null) {
+            showError("Friend is not online.");
+            return;
+        }
+
+        MessageBufferPacker packer = MessagePack.newDefaultBufferPacker();
+        try {
+            packer.packMapHeader(4)
+                .packString("version").packString("1.0")
+                .packString("method").packString("get_reported_comments")
+                .packString("id").packInt(12345)
+                .packString("params").packMapHeader(5)
+                    .packString("access_token").packString("access-token-test")
+                    .packString("by").packLong(3)
+                    .packString("upper_bound").packLong(0)
+                    .packString("lower_bound").packLong(0)
+                    .packString("max_count").packLong(0);
             packer.close(); // Never forget to close (or flush) the buffer
         } catch (IOException e) {
             e.printStackTrace();
@@ -936,7 +1045,7 @@ public class MainActivity extends AppCompatActivity {
         Params params = new Params();
 
         class Params {
-            String access_token= "access_token-test";
+            String access_token= "access-token-test";
             String key         = "key-test";
             String algo        = "None";
             String checksum    = "";
@@ -958,7 +1067,7 @@ public class MainActivity extends AppCompatActivity {
         Params params = new Params();
 
         class Params {
-            String access_token= "access_token-test";
+            String access_token= "access-token-test";
             String key         = "key-test";
         }
     }
@@ -980,7 +1089,7 @@ public class MainActivity extends AppCompatActivity {
         Params params = new Params();
 
         class Params {
-            String access_token= "access_token-test";
+            String access_token= "access-token-test";
         }
     }
 
