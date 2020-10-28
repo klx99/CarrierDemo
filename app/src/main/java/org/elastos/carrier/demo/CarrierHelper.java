@@ -4,6 +4,7 @@ import android.content.Context;
 
 import org.elastos.carrier.Carrier;
 import org.elastos.carrier.CarrierHandler;
+import org.elastos.carrier.ConnectionStatus;
 import org.elastos.carrier.FriendInfo;
 
 import java.util.List;
@@ -11,15 +12,21 @@ import java.util.List;
 public final class CarrierHelper {
     private CarrierHelper() {}
 
+    public interface Listener {
+        void onStatus(boolean online);
+        void onFriendStatus(boolean online);
+        void onReceivedMessage(byte[] data);
+    }
+
     public static Carrier getCarrier() {
        return sCarrier;
     }
 
-    public static void startCarrier(Context context) {
+    public static void startCarrier(Context context, Listener listener) {
         try {
             String dir = context.getFilesDir().getAbsolutePath();
             Carrier.Options options = new DefaultCarrierOptions(dir);
-            CarrierHandler handler = new DefaultCarrierHandler();
+            CarrierHandler handler = new DefaultCarrierHandler(listener);
 
             sCarrier = Carrier.createInstance(options, handler);
 

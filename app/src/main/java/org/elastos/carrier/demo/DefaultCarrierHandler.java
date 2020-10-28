@@ -10,9 +10,15 @@ import java.util.Date;
 import java.util.List;
 
 public class DefaultCarrierHandler extends AbstractCarrierHandler {
+    public DefaultCarrierHandler(CarrierHelper.Listener listener) {
+        mListener = listener;
+    }
+
     @Override
     public void onConnection(Carrier carrier, ConnectionStatus status) {
         Logger.info("Carrier connection status: " + status);
+
+        mListener.onStatus(status == ConnectionStatus.Connected ? true : false);
 
         if(status == ConnectionStatus.Connected) {
             String msg = "Friend List:";
@@ -45,6 +51,8 @@ public class DefaultCarrierHandler extends AbstractCarrierHandler {
         } else {
             CarrierHelper.setPeerUserId(null);
         }
+
+        mListener.onFriendStatus(status == ConnectionStatus.Connected ? true : false);
     }
 
     @Override
@@ -57,6 +65,9 @@ public class DefaultCarrierHandler extends AbstractCarrierHandler {
             sb.append(String.format("%02x", b));
         Logger.info("ReceivedMessage: \n" + sb.toString());
 
+        mListener.onReceivedMessage(message);
     }
+
+    private CarrierHelper.Listener mListener;
 }
 

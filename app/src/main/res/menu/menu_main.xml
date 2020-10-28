@@ -1,0 +1,42 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.myapplication.MainActivity">
+    <group android:id="@+id/group_common">
+        <item android:id="@+id/action_empty"
+            android:title="" />
+        <item android:id="@+id/action_clear_log"
+            android:title="Clear Log" />
+    </group>
+    <group android:id="@+id/group_carrier"
+        android:enabled="false" >
+        <item android:id="@+id/action_carrier_my_address"
+            android:title="My Address" />
+        <item android:id="@+id/action_carrier_scan_address"
+            android:title="Scan Address" />
+        <item android:id="@+id/action_carrier_send_message"
+            android:title="Send Message" />
+
+        <item android:id="@+id/action_carrier_get_version"
+            android:title="Get Version" />
+        <item android:id="@+id/action_carrier_report_comment"
+            android:title="Report Comment" />
+        <item android:id="@+id/action_carrier_block_comment"
+            android:title="Block/Unblock Comment" />
+        <item android:id="@+id/action_carrier_get_reported_comments"
+            android:title="Get Reported Comments" />
+    </group>
+    <group android:id="@+id/group_session"
+        android:enabled="false" >
+        <item android:id="@+id/action_session_create"
+            android:title="Create Session" />
+        <item android:id="@+id/action_session_destroy"
+            android:title="Destroy Session" />
+        <item android:id="@+id/action_session_write"
+            android:title="Session Write" />
+
+        <item android:id="@+id/action_session_set_bindata"
+            android:title="Session SetBinData" />
+        <item android:id="@+id/action_session_get_bindata"
+            android:title="Session GetBinData" />
+    </group>
+</menu>
