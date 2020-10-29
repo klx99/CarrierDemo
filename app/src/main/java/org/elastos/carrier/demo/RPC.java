@@ -4,7 +4,7 @@ import java.lang.reflect.Field;
 import java.util.Random;
 
 public class RPC {
-    enum Type {
+    public enum Type {
         SetBinary,
         GetBinary,
         GetVersion,
@@ -13,7 +13,7 @@ public class RPC {
         GetReportedComments,
     }
 
-    static Request MakeRequest(Type type) {
+    public static Request MakeRequest(Type type) {
         Request req = null;
 
         switch (type) {
@@ -97,7 +97,7 @@ public class RPC {
     static class ReportIllegalCommentResponse extends Response {
     }
 
-    static class Request {
+    public static class Request {
         String version = "1.0";
         String method = null;
         long id = Math.abs(new Random().nextInt());

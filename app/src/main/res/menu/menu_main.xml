@@ -18,6 +18,11 @@
 
         <item android:id="@+id/action_carrier_get_version"
             android:title="Get Version" />
+        <item android:id="@+id/action_carrier_sign_in"
+            android:title="Sign In" />
+        <item android:id="@+id/action_carrier_did_auth"
+            android:title="Did Auth" />
+
         <item android:id="@+id/action_carrier_report_comment"
             android:title="Report Comment" />
         <item android:id="@+id/action_carrier_block_comment"

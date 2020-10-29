@@ -76,7 +76,7 @@ public final class Logger {
         }
 
         int color = Color.BLACK;
-        if(prefix == 'I') {
+        if(prefix == 'D') {
             Log.d(TAG, msg);
             color = Color.GREEN;
         } else if(prefix == 'I') {

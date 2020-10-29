@@ -2,15 +2,13 @@ package org.elastos.carrier.demo;
 
 import android.util.Log;
 
-import org.elastos.carrier.exceptions.SystemException;
-
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import static org.elastos.carrier.demo.Logger.TAG;
 
 public class SessionParser {
-    interface OnUnpackedListener {
+    public interface OnUnpackedListener {
         void onUnpacked(byte[] headData);
     }
 
@@ -48,7 +46,7 @@ public class SessionParser {
         static final int CarrierSessionErrorExists        = -142;
     }
 
-    int unpack(byte[] data, OnUnpackedListener listener) {
+    public int unpack(byte[] data, OnUnpackedListener listener) {
         // Log::W(Log::TAG, "%s datasize=%d", __PRETTY_FUNCTION__, data.size());
 
         int dataPos = 0;

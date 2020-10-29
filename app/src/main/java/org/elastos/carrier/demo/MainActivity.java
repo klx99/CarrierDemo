@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.MenuCompat;
 
 import org.elastos.carrier.demo.carrier.CarrierHelper;
+import org.elastos.carrier.demo.menu.MenuHelper;
 import org.elastos.carrier.demo.session.CarrierSessionHelper;
 
 public class MainActivity extends AppCompatActivity {
