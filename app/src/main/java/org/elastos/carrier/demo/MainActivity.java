@@ -32,7 +32,12 @@ public class MainActivity extends AppCompatActivity {
         txtMsg.setMovementMethod(new ScrollingMovementMethod());
         Logger.init(txtMsg);
 
-        MenuHelper.Init(this, carrierListener, sessionListener);
+        cmdThread = new HandlerThread("command-thread");
+        cmdThread.start();
+        cmdHandler = new Handler(cmdThread.getLooper());
+        cmdHandler.post(() -> {
+            MenuHelper.Init(this, carrierListener, sessionListener);
+        });
     }
 
     @Override
@@ -95,6 +100,12 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_carrier_get_version:
                 type = RPC.Type.GetVersion;
                 break;
+            case R.id.action_carrier_declare_post:
+                type = RPC.Type.DeclarePost;
+                break;
+            case R.id.action_carrier_notify_post:
+                type = RPC.Type.NotifyPost;
+                break;
             case R.id.action_carrier_report_comment:
                 type = RPC.Type.ReportIllegalComment;
                 break;
@@ -104,9 +115,24 @@ public class MainActivity extends AppCompatActivity {
 //            case R.id.action_carrier_get_reported_comments:
 //                type = RPC.Type.GetReportedComments;
 //                break;
+            case R.id.action_carrier_sign_in:
+                type = RPC.Type.SignIn;
+                break;
+            case R.id.action_carrier_did_auth:
+                type = RPC.Type.DidAuth;
+                break;
+            case R.id.action_carrier_set_bindata:
+                type = RPC.Type.SetBinary;
+                break;
+            case R.id.action_carrier_get_bindata:
+                type = RPC.Type.GetBinary;
+                break;
         }
         if(type != null) {
-            MenuHelper.Carrier.SendCommand(type);
+            RPC.Type finalType = type;
+            cmdHandler.post(() -> {
+                MenuHelper.Carrier.SendCommand(finalType);
+            });
             return true;
         }
 
@@ -114,9 +140,15 @@ public class MainActivity extends AppCompatActivity {
         case R.id.action_session_set_bindata:
             type = RPC.Type.SetBinary;
             break;
+        case R.id.action_session_get_bindata:
+            type = RPC.Type.GetBinary;
+            break;
         }
         if(type != null) {
-            MenuHelper.Session.SendCommand(type);
+            RPC.Type finalType = type;
+            cmdHandler.post(() -> {
+                MenuHelper.Session.SendCommand(finalType);
+            });
             return true;
         }
 
@@ -206,11 +238,9 @@ public class MainActivity extends AppCompatActivity {
         public void onFriendStatus(boolean online) {
             Handler handler = new Handler(Looper.getMainLooper());
             handler.post(() -> {
-                optionsMenu.findItem(R.id.action_carrier_send_message).setEnabled(online);
-                optionsMenu.findItem(R.id.action_carrier_get_version).setEnabled(online);
-                optionsMenu.findItem(R.id.action_carrier_report_comment).setEnabled(online);
-                optionsMenu.findItem(R.id.action_carrier_block_comment).setEnabled(online);
-                optionsMenu.findItem(R.id.action_carrier_get_reported_comments).setEnabled(online);
+                optionsMenu.setGroupEnabled(R.id.group_carrier, online);
+                optionsMenu.findItem(R.id.action_carrier_my_address).setEnabled(true);
+                optionsMenu.findItem(R.id.action_carrier_scan_address).setEnabled(true);
 
                 optionsMenu.findItem(R.id.action_session_create).setEnabled(online);
                 optionsMenu.findItem(R.id.action_session_destroy).setEnabled(online);
@@ -259,4 +289,6 @@ public class MainActivity extends AppCompatActivity {
     };
 
     Menu optionsMenu;
+    HandlerThread cmdThread;
+    Handler cmdHandler;
 }

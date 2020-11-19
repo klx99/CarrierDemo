@@ -139,6 +139,9 @@ public class MenuCarrierHelper {
         }
 
         RPC.Request req = RPC.MakeRequest(type);
+        if(type == RPC.Type.SetBinary) {
+            ((RPC.SetBinaryRequest)req).params.content = "test bin data".getBytes();
+        }
         byte[] data = MsgPackHelper.PackData(req);
         CarrierHelper.sendMessage(data);
     }

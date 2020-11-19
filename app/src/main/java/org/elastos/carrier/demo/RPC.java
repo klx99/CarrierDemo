@@ -8,9 +8,13 @@ public class RPC {
         SetBinary,
         GetBinary,
         GetVersion,
+        DeclarePost,
+        NotifyPost,
         ReportIllegalComment,
         BlockComment,
         GetReportedComments,
+        SignIn,
+        DidAuth,
     }
 
     public static Request MakeRequest(Type type) {
@@ -26,22 +30,35 @@ public class RPC {
         case GetVersion:
             req = new GetVersionRequest();
             break;
+        case DeclarePost:
+            req = new DeclarePostRequest();
+            break;
+        case NotifyPost:
+            req = new NotifyPostRequest();
+            break;
         case ReportIllegalComment:
             req = new ReportIllegalCommentRequest();
+            break;
+        case SignIn:
+            req = new SignInRequest();
+            break;
+        case DidAuth:
+            req = new DidAuthRequest();
             break;
         }
 
         return req;
     }
 
-    static class SetBinaryRequest extends Request {
+    public static class SetBinaryRequest extends Request {
         String method = "set_binary";
-        ExtParams params = new ExtParams();
+        public ExtParams params = new ExtParams();
 
-        class ExtParams extends Params {
+        public class ExtParams extends Params {
             String key         = "key-test";
             String algo        = "None";
-            String checksum    = "";
+            String checksum    = "sss";
+            public byte[] content     = null;
         }
     }
     static class SetBinaryResponse extends Response {
@@ -67,6 +84,7 @@ public class RPC {
             String key         = "key-test";
             String algo        = "None";
             String checksum    = "";
+            public byte[] content     = null;
         }
     }
 
@@ -82,6 +100,75 @@ public class RPC {
         }
     }
 
+    static class DeclarePostRequest extends Request {
+        String method = "declare_post";
+        DeclarePostRequest.ExtParams params = new DeclarePostRequest.ExtParams();
+
+        class ExtParams extends Params {
+            int channelId         = 1;
+            byte[] content        = "just a content".getBytes();
+            boolean with_notify   = false;
+        }
+    }
+
+    static class DeclarePostResponse extends Response {
+        ExtResult result = new ExtResult();
+
+        class ExtResult extends Result {
+            int postId     = 0;
+        }
+    }
+
+
+    static class NotifyPostRequest extends Request {
+        String method = "notify_post";
+        NotifyPostRequest.ExtParams params = new NotifyPostRequest.ExtParams();
+
+        class ExtParams extends Params {
+            int channelId      = 1;
+            int postId         = 5;
+        }
+    }
+
+    static class NotifyPostResponse extends Response {
+    }
+
+
+    static class SignInRequest extends Request {
+        String method = "standard_sign_in";
+        ExtParams params = new ExtParams();
+
+        class ExtParams extends Params {
+            String document      = StandardAuth.makeDoc();
+        }
+    }
+
+    static class SignInResponse extends Response {
+        ExtResult result = new ExtResult();
+
+        class ExtResult extends Result {
+            String challenge     = null;
+        }
+    }
+
+    static class DidAuthRequest extends Request {
+        String method = "standard_did_auth";
+        ExtParams params = new ExtParams();
+
+        class ExtParams extends Params {
+            String jwt     = StandardAuth.makeJwt();
+        }
+    }
+
+    static class DidAuthResponse extends Response {
+        ExtResult result = new ExtResult();
+
+        class ExtResult extends Result {
+            String accessToken     = null;
+        }
+    }
+
+
     static class ReportIllegalCommentRequest extends Request {
         String method = "report_illegal_comment";
         ExtParams params = new ExtParams();
@@ -95,6 +182,15 @@ public class RPC {
     }
 
     static class ReportIllegalCommentResponse extends Response {
+    }
+
+    static class ErrorResponse extends Response {
+        ExtResult error = new ExtResult();
+
+        class ExtResult extends Result {
+            long code = -1;
+            String message = null;
+        }
     }
 
     public static class Request {
@@ -132,7 +228,7 @@ public class RPC {
     }
 
     static class Params {
-        String accessToken= "access-token-test";
+        String accessToken= StandardAuth.GetAccessToken();
     }
 
     private static String ToString(Object obj) {

@@ -103,8 +103,8 @@ public class CarrierSessionInfo {
             return strBin;
         }
 
-        private static Integer mState = 0;
-        private static final Object mLocker = new Object();
+        private Integer mState = 0;
+        private final Object mLocker = new Object();
     }
 
     public CarrierSessionInfo(CarrierSessionHelper.Listener listener) {

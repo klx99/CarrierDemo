@@ -2,6 +2,8 @@ package org.elastos.carrier.demo.session;
 
 import org.elastos.carrier.demo.Logger;
 import org.elastos.carrier.demo.carrier.CarrierHelper;
+import org.elastos.carrier.exceptions.CarrierException;
+import org.elastos.carrier.exceptions.GeneralException;
 import org.elastos.carrier.session.Manager;
 import org.elastos.carrier.session.ManagerHandler;
 import org.elastos.carrier.session.PortForwardingProtocol;
@@ -71,6 +73,9 @@ public final class CarrierSessionHelper {
     public static void requestSession(CarrierSessionInfo sessionInfo) {
         try {
             sessionInfo.mSession.request(sessionInfo.mSessionHandler);
+        } catch (CarrierException e) {
+            Logger.error("Failed to request session or stream. " +
+                    "err=" + Integer.toHexString(e.getErrorCode()) + " errdesp=" + e.getMessage(), e);
         } catch (Exception e) {
             Logger.error("Failed to request session or stream.", e);
         }

@@ -23,6 +23,16 @@
         <item android:id="@+id/action_carrier_did_auth"
             android:title="Did Auth" />
 
+        <item android:id="@+id/action_carrier_set_bindata"
+            android:title="SetBinData" />
+        <item android:id="@+id/action_carrier_get_bindata"
+            android:title="GetBinData" />
+
+        <item android:id="@+id/action_carrier_declare_post"
+            android:title="Declare Post" />
+        <item android:id="@+id/action_carrier_notify_post"
+            android:title="Notify Post" />
+
         <item android:id="@+id/action_carrier_report_comment"
             android:title="Report Comment" />
         <item android:id="@+id/action_carrier_block_comment"
