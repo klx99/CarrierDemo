@@ -6,6 +6,7 @@ import org.elastos.did.DID;
 import org.elastos.did.DIDBackend;
 import org.elastos.did.DIDDocument;
 import org.elastos.did.DIDStore;
+import org.elastos.did.DIDURL;
 import org.elastos.did.Issuer;
 import org.elastos.did.VerifiableCredential;
 import org.elastos.did.VerifiablePresentation;
@@ -19,7 +20,6 @@ import org.elastos.did.jwt.JwtParserBuilder;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 
 public class StandardAuth {
     public static void Init(Context context) {
@@ -46,7 +46,7 @@ public class StandardAuth {
     static String makeDoc() {
         String instanceDoc = null;
         try {
-            instanceDoc = instanceStore.loadDid(instanceDid).toString();
+            instanceDoc = userStore.loadDid(instanceDid).toString();
         } catch (Exception e) {
             Logger.error("Failed make jwt.", e);
         }
@@ -54,7 +54,7 @@ public class StandardAuth {
         return  instanceDoc;
     }
 
-    static String makeJwt() {
+    static String makeVP() {
         String token = "";
 
         try {
@@ -64,44 +64,46 @@ public class StandardAuth {
             Logger.info("Feedsd Did: " + feedsdDid);
             String feedsdNonce = jws.get("nonce", String.class);
             Logger.info("Feedsd Nonce: " + feedsdNonce);
-            String feedsAud = jws.getAudience();
-            Logger.info("Feedsd Audience: " + feedsAud);
+            String aud = jws.getAudience();
+            if(instanceDid.equals(aud) == false) {
+                Logger.error("Failed to check challenge audience.");
+                return "";
+            }
+            Logger.info("Audience: " + aud);
 
             // issue_auth
             {
-                DIDDocument instanceDoc = instanceStore.loadDid(instanceDid);
-                Issuer instanceIssuer = new Issuer(instanceDoc);
+                DIDDocument userDoc = userStore.loadDid(userDid);
+                Issuer userIssuer = new Issuer(userDoc);
 
                 HashMap<String, String> subject= new HashMap<>();
-                subject.put("appDid", "did:elastos:i000000000000000000000000000000000");
+                subject.put("appDid", appDid.toString());
+                subject.put("name", "TestName");
+//                subject.put("email", "test@email.com");
 
-                Issuer.CredentialBuilder icb = instanceIssuer.issueFor(instanceDid);
-                VerifiableCredential vc = icb.id("didapp")
+                Issuer.CredentialBuilder icb = userIssuer.issueFor(instanceDid);
+                VerifiableCredential vc = icb.id("didsdk")
                         .type("AppIdCredential")
                         .properties(subject)
-                        .expirationDate(instanceDoc.getExpires())
+                        .expirationDate(userDoc.getExpires())
                         .seal(storePassword);
 
-
-                VerifiablePresentation.Builder vpb = VerifiablePresentation.createFor(instanceDid, instanceStore);
+                VerifiablePresentation.Builder vpb = VerifiablePresentation.createFor(instanceDid, userStore);
                 VerifiablePresentation vp = vpb.credentials(vc)
-                        .realm(instanceDid.toString())
+                        .realm(feedsdDid)
                         .nonce(feedsdNonce)
                         .seal(storePassword);
                 Logger.info("VerifiablePresentation: " + vp);
 
                 Calendar cal = Calendar.getInstance();
                 cal.set(Calendar.MILLISECOND, 0);
-                Date iat = cal.getTime();
-                Date nbf = cal.getTime();
-                cal.add(Calendar.SECOND, 60);
+                cal.add(Calendar.SECOND, 60 * 5);
                 Date exp = cal.getTime();
+                DIDDocument instanceDoc = userStore.loadDid(instanceDid);
                 token = instanceDoc.jwtBuilder()
                         .addHeader(Header.TYPE, Header.JWT_TYPE)
                         .addHeader("version", "1.0")
                         .setAudience(feedsdDid)
-                        .setIssuedAt(iat)
-                        .setNotBefore(nbf)
                         .setExpiration(exp)
                         .claimWithJson("presentation", vp.toString())
                         .sign(storePassword)
@@ -122,29 +124,37 @@ public class StandardAuth {
 
         DIDBackend.initialize("http://api.elastos.io:20606", cacheDir);
 
-        instanceStore = DIDStore.open("filesystem", storePath, (payload, memo) -> {
+        userStore = DIDStore.open("filesystem", storePath, (payload, memo) -> {
             Logger.info("Create ID transaction with:");
             Logger.info("  Payload = " + payload);
         });
 
-        if (instanceStore.containsPrivateIdentity() == false) {
-            instanceStore.initPrivateIdentity(null, mnemonic, null, storePassword);
-            instanceStore.synchronize(storePassword);
+        if (userStore.containsPrivateIdentity() == false) {
+            userStore.initPrivateIdentity(null, mnemonic, null, storePassword);
+            userStore.synchronize(storePassword);
         }
-        List<DID> dids = instanceStore.listDids(DIDStore.DID_HAS_PRIVATEKEY);
-        if (dids.size() > 0) {
-            for (DID did : dids) {
-                Logger.info("did:" + did);
-                Logger.info("diddoc:" + instanceStore.loadDid(did));
-            }
-            instanceDid = dids.get(0);
-        } else {
-            Logger.info("No dids restored.");
+
+        userDid = userStore.getDid(0);
+        if(userStore.containsDid(userDid) == false) {
+            userStore.newDid(0, storePassword);
         }
+        appDid = userStore.getDid(1);
+        if(userStore.containsDid(appDid) == false) {
+            userStore.newDid(1, storePassword);
+        }
+        instanceDid = userStore.getDid(2);
+        if(userStore.containsDid(instanceDid) == false) {
+            userStore.newDid(2, storePassword);
+        }
+        Logger.info("AppDID:" + appDid);
+        Logger.info("UserDID:" + userDid);
+        Logger.info("InstanceDID:" + instanceDid);
     }
 
     private static Context context;
-    private static DIDStore instanceStore;
+    private static DIDStore userStore;
+    private static DID appDid;
+    private static DID userDid;
     private static DID instanceDid;
     private static String challenge = null;
     private static String accessToken = "invalid-token";

@@ -156,7 +156,7 @@ public class RPC {
         ExtParams params = new ExtParams();
 
         class ExtParams extends Params {
-            String jwt     = StandardAuth.makeJwt();
+            String vp = StandardAuth.makeVP();
         }
     }
 

@@ -311,7 +311,7 @@ public class MsgPackHelper {
     private static byte[] PackData(RPC.DidAuthRequest req) {
         MessageBufferPacker packer = MakeMsgPacker(req, 1, false);
         try {
-            packer.packString("jwt").packString(req.params.jwt);
+            packer.packString("vp").packString(req.params.vp);
             packer.close(); // Never forget to close (or flush) the buffer
         } catch (Exception e) {
             e.printStackTrace();
