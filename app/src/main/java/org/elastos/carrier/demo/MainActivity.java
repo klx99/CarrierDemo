@@ -100,6 +100,12 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_carrier_get_version:
                 type = RPC.Type.GetVersion;
                 break;
+            case R.id.action_carrier_download_new_service:
+                type = RPC.Type.DownloadNewService;
+                break;
+            case R.id.action_carrier_start_new_service:
+                type = RPC.Type.StartNewService;
+                break;
             case R.id.action_carrier_declare_post:
                 type = RPC.Type.DeclarePost;
                 break;
@@ -120,6 +126,18 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case R.id.action_carrier_did_auth:
                 type = RPC.Type.DidAuth;
+                break;
+            case R.id.action_carrier_enable_notify:
+                type = RPC.Type.EnableNotify;
+                break;
+            case R.id.action_carrier_get_multi_comments:
+                type = RPC.Type.GetMultiComments;
+                break;
+            case R.id.action_carrier_get_multi_likes_and_comments_count:
+                type = RPC.Type.GetMultiLikesAndCommentsCount;
+                break;
+            case R.id.action_carrier_get_multi_subscribers_count:
+                type = RPC.Type.GetMultiSubscribersCount;
                 break;
             case R.id.action_carrier_set_bindata:
                 type = RPC.Type.SetBinary;

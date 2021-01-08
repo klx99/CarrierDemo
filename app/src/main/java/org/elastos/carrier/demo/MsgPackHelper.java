@@ -4,6 +4,7 @@ import org.elastos.did.DIDDocument;
 import org.msgpack.core.MessageBufferPacker;
 import org.msgpack.core.MessagePack;
 import org.msgpack.core.MessageUnpacker;
+import org.msgpack.value.ArrayValue;
 import org.msgpack.value.Value;
 import org.msgpack.value.ValueFactory;
 
@@ -23,6 +24,12 @@ public class MsgPackHelper {
         } else if(req instanceof RPC.GetVersionRequest) {
             data = PackData((RPC.GetVersionRequest) req);
             responseMap.put(req.id, new RPC.GetVersionResponse());
+        } else if(req instanceof RPC.DownloadNewServiceRequest) {
+            data = PackData((RPC.DownloadNewServiceRequest) req);
+            responseMap.put(req.id, new RPC.DownloadNewServiceResponse());
+        } else if(req instanceof RPC.StartNewServiceRequest) {
+            data = PackData((RPC.StartNewServiceRequest) req);
+            responseMap.put(req.id, new RPC.StartNewServiceResponse());
         } else if(req instanceof RPC.DeclarePostRequest) {
             data = PackData((RPC.DeclarePostRequest) req);
             responseMap.put(req.id, new RPC.DeclarePostResponse());
@@ -38,6 +45,18 @@ public class MsgPackHelper {
         } else if(req instanceof RPC.DidAuthRequest) {
             data = PackData((RPC.DidAuthRequest) req);
             responseMap.put(req.id, new RPC.DidAuthResponse());
+        } else if(req instanceof RPC.EnableNotifyRequest) {
+            data = PackData((RPC.EnableNotifyRequest) req);
+            responseMap.put(req.id, new RPC.EnableNotifyResponse());
+        } else if(req instanceof RPC.GetMultiCommentsRequest) {
+            data = PackData((RPC.GetMultiCommentsRequest) req);
+            responseMap.put(req.id, new RPC.GetMultiCommentsResponse());
+        } else if(req instanceof RPC.GetMultiLikesAndCommentsCountRequest) {
+            data = PackData((RPC.GetMultiLikesAndCommentsCountRequest) req);
+            responseMap.put(req.id, new RPC.GetMultiLikesAndCommentsCountResponse());
+        } else if(req instanceof RPC.GetMultiSubscribersCountRequest) {
+            data = PackData((RPC.GetMultiSubscribersCountRequest) req);
+            responseMap.put(req.id, new RPC.GetMultiSubscribersCountResponse());
         }
 
         return data;
@@ -72,6 +91,10 @@ public class MsgPackHelper {
             UnpackData(map, (RPC.GetBinaryResponse) resp);
         } else if(resp instanceof RPC.GetVersionResponse) {
             UnpackData(map, (RPC.GetVersionResponse) resp);
+        } else if(resp instanceof RPC.DownloadNewServiceResponse) {
+            UnpackData(map, (RPC.DownloadNewServiceResponse) resp);
+        } else if(resp instanceof RPC.StartNewServiceResponse) {
+            UnpackData(map, (RPC.StartNewServiceResponse) resp);
         } else if(resp instanceof RPC.DeclarePostResponse) {
             UnpackData(map, (RPC.DeclarePostResponse) resp);
         } else if(resp instanceof RPC.NotifyPostResponse) {
@@ -82,6 +105,14 @@ public class MsgPackHelper {
             UnpackData(map, (RPC.SignInResponse) resp);
         } else if(resp instanceof RPC.DidAuthResponse) {
             UnpackData(map, (RPC.DidAuthResponse) resp);
+        } else if(resp instanceof RPC.EnableNotifyResponse) {
+            UnpackData(map, (RPC.EnableNotifyResponse) resp);
+        } else if(resp instanceof RPC.GetMultiCommentsResponse) {
+            UnpackData(map, (RPC.GetMultiCommentsResponse) resp);
+        } else if(resp instanceof RPC.GetMultiLikesAndCommentsCountResponse) {
+            UnpackData(map, (RPC.GetMultiLikesAndCommentsCountResponse) resp);
+        } else if(resp instanceof RPC.GetMultiSubscribersCountResponse) {
+            UnpackData(map, (RPC.GetMultiSubscribersCountResponse) resp);
         }
 
         return resp;
@@ -174,6 +205,58 @@ public class MsgPackHelper {
     private static void UnpackData(Map<Value, Value> map, RPC.GetVersionResponse resp) {
         Map<Value, Value> result = map.get(ValueFactory.newString("result")).asMapValue().map();
         resp.result.version = result.get(ValueFactory.newString("version")).asStringValue().asString();
+        resp.result.versionCode = result.get(ValueFactory.newString("version_code")).asIntegerValue().asLong();
+    }
+
+    private static byte[] PackData(RPC.DownloadNewServiceRequest req) {
+        MessageBufferPacker packer = MakeMsgPackerWithToken(req, 6);
+        try {
+            packer.packString("new_version").packString(req.params.new_version);
+            packer.packString("base_url").packString(req.params.base_url);
+            packer.packString("macosx").packMapHeader(3)
+                    .packString("name").packString(req.params.macosx.name)
+                    .packString("size").packLong(req.params.macosx.size)
+                    .packString("md5").packString(req.params.macosx.md5);
+            packer.packString("ubuntu_1804").packMapHeader(3)
+                    .packString("name").packString(req.params.ubuntu_1804.name)
+                    .packString("size").packLong(req.params.ubuntu_1804.size)
+                    .packString("md5").packString(req.params.ubuntu_1804.md5);
+            packer.packString("ubuntu_2004").packMapHeader(3)
+                    .packString("name").packString(req.params.ubuntu_2004.name)
+                    .packString("size").packLong(req.params.ubuntu_2004.size)
+                    .packString("md5").packString(req.params.ubuntu_2004.md5);
+            packer.packString("raspbian").packMapHeader(3)
+                    .packString("name").packString(req.params.raspbian.name)
+                    .packString("size").packLong(req.params.raspbian.size)
+                    .packString("md5").packString(req.params.raspbian.md5);
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (Exception e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        return packer.toByteArray();
+    }
+
+    private static void UnpackData(Map<Value, Value> map, RPC.DownloadNewServiceResponse resp) {
+        // do nothing
+    }
+
+    private static byte[] PackData(RPC.StartNewServiceRequest req) {
+        MessageBufferPacker packer = MakeMsgPackerWithToken(req, 1);
+        try {
+            packer.packString("new_version").packString(req.params.new_version);
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (Exception e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        return packer.toByteArray();
+    }
+
+    private static void UnpackData(Map<Value, Value> map, RPC.StartNewServiceResponse resp) {
+        // do nothing
     }
 
     private static byte[] PackData(RPC.DeclarePostRequest req) {
@@ -304,14 +387,15 @@ public class MsgPackHelper {
 
     private static void UnpackData(Map<Value, Value> map, RPC.SignInResponse resp) {
         Map<Value, Value> result = map.get(ValueFactory.newString("result")).asMapValue().map();
-        resp.result.challenge = result.get(ValueFactory.newString("challenge")).asStringValue().asString();
-        StandardAuth.SetChallenge(resp.result.challenge);
+        resp.result.jwtChallenge = result.get(ValueFactory.newString("jwt_challenge")).asStringValue().asString();
+        StandardAuth.SetChallenge(resp.result.jwtChallenge);
     }
 
     private static byte[] PackData(RPC.DidAuthRequest req) {
-        MessageBufferPacker packer = MakeMsgPacker(req, 1, false);
+        MessageBufferPacker packer = MakeMsgPacker(req, 2, false);
         try {
-            packer.packString("vp").packString(req.params.vp);
+            packer.packString("user_name").packString(req.params.userName);
+            packer.packString("jwt_vp").packString(req.params.jwtVP);
             packer.close(); // Never forget to close (or flush) the buffer
         } catch (Exception e) {
             e.printStackTrace();
@@ -326,6 +410,118 @@ public class MsgPackHelper {
         resp.result.accessToken = result.get(ValueFactory.newString("access_token")).asStringValue().asString();
         StandardAuth.SetAccessToken(resp.result.accessToken);
     }
+
+    private static byte[] PackData(RPC.EnableNotifyRequest req) {
+        MessageBufferPacker packer = MakeMsgPacker(req, 0, true);
+        return packer.toByteArray();
+    }
+
+    private static void UnpackData(Map<Value, Value> map, RPC.EnableNotifyResponse resp) {
+        // do nothing
+    }
+
+    private static byte[] PackData(RPC.GetMultiCommentsRequest req) {
+        MessageBufferPacker packer = MakeMsgPackerWithToken(req, 6);
+        try {
+            packer.packString("channel_id").packLong(req.params.channel_id);
+            packer.packString("post_id").packLong(req.params.post_id);
+            packer.packString("by").packLong(req.params.by);
+            packer.packString("upper_bound").packLong(req.params.upper_bound);
+            packer.packString("lower_bound").packLong(req.params.lower_bound);
+            packer.packString("max_count").packLong(req.params.max_count);
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (Exception e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        return packer.toByteArray();
+    }
+
+    private static void UnpackData(Map<Value, Value> map, RPC.GetMultiCommentsResponse resp) {
+        Value aa = map.get(ValueFactory.newString("result"));
+        Map<Value, Value> result = map.get(ValueFactory.newString("result")).asMapValue().map();
+        resp.result.is_last = result.get(ValueFactory.newString("is_last")).asBooleanValue().getBoolean();
+        ArrayValue comments = result.get(ValueFactory.newString("comments")).asArrayValue();
+        resp.result.comments = new RPC.GetMultiCommentsResponse.ExtResult.Comment[comments.size()];
+        for(int idx = 0; idx < comments.size(); idx++) {
+            Map<Value, Value> comment = comments.get(idx).asMapValue().map();;
+            resp.result.comments[idx] = new RPC.GetMultiCommentsResponse.ExtResult.Comment();
+            resp.result.comments[idx].channel_id = comment.get(ValueFactory.newString("channel_id")).asIntegerValue().asLong();
+            resp.result.comments[idx].post_id = comment.get(ValueFactory.newString("post_id")).asIntegerValue().asLong();
+            resp.result.comments[idx].comment_id = comment.get(ValueFactory.newString("comment_id")).asIntegerValue().asLong();
+            resp.result.comments[idx].refer_comment_id = comment.get(ValueFactory.newString("refer_comment_id")).asIntegerValue().asLong();
+            resp.result.comments[idx].status = comment.get(ValueFactory.newString("status")).asIntegerValue().asLong();
+            resp.result.comments[idx].user_did = comment.get(ValueFactory.newString("user_did")).asStringValue().asString();
+            resp.result.comments[idx].user_name = comment.get(ValueFactory.newString("user_name")).asStringValue().asString();
+            resp.result.comments[idx].content = comment.get(ValueFactory.newString("content")).asBinaryValue().asByteArray();
+            resp.result.comments[idx].likes = comment.get(ValueFactory.newString("likes")).asIntegerValue().asLong();
+            resp.result.comments[idx].created_at = comment.get(ValueFactory.newString("created_at")).asIntegerValue().asLong();
+            resp.result.comments[idx].updated_at = comment.get(ValueFactory.newString("updated_at")).asIntegerValue().asLong();
+        }
+    }
+
+    private static byte[] PackData(RPC.GetMultiLikesAndCommentsCountRequest req) {
+        MessageBufferPacker packer = MakeMsgPackerWithToken(req, 6);
+        try {
+            packer.packString("channel_id").packLong(req.params.channel_id);
+            packer.packString("post_id").packLong(req.params.post_id);
+            packer.packString("by").packLong(req.params.by);
+            packer.packString("upper_bound").packLong(req.params.upper_bound);
+            packer.packString("lower_bound").packLong(req.params.lower_bound);
+            packer.packString("max_count").packLong(req.params.max_count);
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (Exception e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        return packer.toByteArray();
+    }
+
+    private static void UnpackData(Map<Value, Value> map, RPC.GetMultiLikesAndCommentsCountResponse resp) {
+        Value aa = map.get(ValueFactory.newString("result"));
+        Map<Value, Value> result = map.get(ValueFactory.newString("result")).asMapValue().map();
+        resp.result.is_last = result.get(ValueFactory.newString("is_last")).asBooleanValue().getBoolean();
+        ArrayValue posts = result.get(ValueFactory.newString("posts")).asArrayValue();
+        resp.result.posts = new RPC.GetMultiLikesAndCommentsCountResponse.ExtResult.Post[posts.size()];
+        for(int idx = 0; idx < posts.size(); idx++) {
+            Map<Value, Value> post = posts.get(idx).asMapValue().map();;
+            resp.result.posts[idx] = new RPC.GetMultiLikesAndCommentsCountResponse.ExtResult.Post();
+            resp.result.posts[idx].channel_id = post.get(ValueFactory.newString("channel_id")).asIntegerValue().asLong();
+            resp.result.posts[idx].post_id = post.get(ValueFactory.newString("post_id")).asIntegerValue().asLong();
+            resp.result.posts[idx].comments_count = post.get(ValueFactory.newString("comments_count")).asIntegerValue().asLong();
+            resp.result.posts[idx].likes_count = post.get(ValueFactory.newString("likes_count")).asIntegerValue().asLong();
+        }
+    }
+
+    private static byte[] PackData(RPC.GetMultiSubscribersCountRequest req) {
+        MessageBufferPacker packer = MakeMsgPackerWithToken(req, 1);
+        try {
+            packer.packString("channel_id").packLong(req.params.channel_id);
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (Exception e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        return packer.toByteArray();
+    }
+
+    private static void UnpackData(Map<Value, Value> map, RPC.GetMultiSubscribersCountResponse resp) {
+        Value aa = map.get(ValueFactory.newString("result"));
+        Map<Value, Value> result = map.get(ValueFactory.newString("result")).asMapValue().map();
+        resp.result.is_last = result.get(ValueFactory.newString("is_last")).asBooleanValue().getBoolean();
+        ArrayValue channels = result.get(ValueFactory.newString("channels")).asArrayValue();
+        resp.result.channels = new RPC.GetMultiSubscribersCountResponse.ExtResult.Channel[channels.size()];
+        for(int idx = 0; idx < channels.size(); idx++) {
+            Map<Value, Value> channel = channels.get(idx).asMapValue().map();;
+            resp.result.channels[idx] = new RPC.GetMultiSubscribersCountResponse.ExtResult.Channel();
+            resp.result.channels[idx].channel_id = channel.get(ValueFactory.newString("channel_id")).asIntegerValue().asLong();
+            resp.result.channels[idx].subscribers_count = channel.get(ValueFactory.newString("subscribers_count")).asIntegerValue().asLong();
+        }
+    }
+
 
     private MsgPackHelper() {}
     private static Map<Long, RPC.Response> responseMap = new HashMap<>();

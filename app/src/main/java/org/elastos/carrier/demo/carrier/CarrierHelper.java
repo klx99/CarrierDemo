@@ -125,7 +125,7 @@ public final class CarrierHelper {
         try {
             sCarrier.sendFriendMessage(sPeerUserId, message);
             Logger.info("Carrier send message to UserId: " + sPeerUserId
-                    + "\nmessage: " + message);
+                    + "\nmessage: " + new String(message));
         } catch (Exception e) {
             Logger.error("Failed to send message.", e);
         }

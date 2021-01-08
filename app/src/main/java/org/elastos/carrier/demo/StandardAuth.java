@@ -31,8 +31,8 @@ public class StandardAuth {
         }
     }
 
-    public static void SetChallenge(String challenge) {
-        StandardAuth.challenge = challenge;
+    public static void SetChallenge(String jwtChallenge) {
+        StandardAuth.jwtChallenge = jwtChallenge;
     }
 
     public static void SetAccessToken(String token) {
@@ -59,11 +59,17 @@ public class StandardAuth {
 
         try {
             JwtParser jp = new JwtParserBuilder().build();
-            Claims jws = jp.parseClaimsJws(challenge).getBody();;
+            Claims jws = jp.parseClaimsJws(jwtChallenge).getBody();;
             String feedsdDid = jws.getIssuer();
             Logger.info("Feedsd Did: " + feedsdDid);
             String feedsdNonce = jws.get("nonce", String.class);
             Logger.info("Feedsd Nonce: " + feedsdNonce);
+            String feedsdName = jws.get("name", String.class);
+            Logger.info("Feedsd Name: " + feedsdName);
+            String feedsdDesc = jws.get("description", String.class);
+            Logger.info("Feedsd Description: " + feedsdDesc);
+            String feedsdElaAddr = jws.get("elaAddress", String.class);
+            Logger.info("Feedsd ElaAddress: " + feedsdElaAddr);
             String aud = jws.getAudience();
             if(instanceDid.equals(aud) == false) {
                 Logger.error("Failed to check challenge audience.");
@@ -78,7 +84,6 @@ public class StandardAuth {
 
                 HashMap<String, String> subject= new HashMap<>();
                 subject.put("appDid", appDid.toString());
-                subject.put("name", "TestName");
 //                subject.put("email", "test@email.com");
 
                 Issuer.CredentialBuilder icb = userIssuer.issueFor(instanceDid);
@@ -156,7 +161,7 @@ public class StandardAuth {
     private static DID appDid;
     private static DID userDid;
     private static DID instanceDid;
-    private static String challenge = null;
+    private static String jwtChallenge = null;
     private static String accessToken = "invalid-token";
     private final static String mnemonic = "voice kingdom wall sword pair unusual artefact opera keen aware stay game";
     private final static String storePassword = "0";
