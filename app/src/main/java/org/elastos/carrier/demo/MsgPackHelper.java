@@ -24,6 +24,12 @@ public class MsgPackHelper {
         } else if(req instanceof RPC.GetVersionRequest) {
             data = PackData((RPC.GetVersionRequest) req);
             responseMap.put(req.id, new RPC.GetVersionResponse());
+        } else if(req instanceof RPC.BackupServiceDataRequest) {
+            data = PackData((RPC.BackupServiceDataRequest) req);
+            responseMap.put(req.id, new RPC.BackupServiceDataResponse());
+        } else if(req instanceof RPC.RestoreServiceDataRequest) {
+            data = PackData((RPC.RestoreServiceDataRequest) req);
+            responseMap.put(req.id, new RPC.RestoreServiceDataResponse());
         } else if(req instanceof RPC.DownloadNewServiceRequest) {
             data = PackData((RPC.DownloadNewServiceRequest) req);
             responseMap.put(req.id, new RPC.DownloadNewServiceResponse());
@@ -206,6 +212,46 @@ public class MsgPackHelper {
         Map<Value, Value> result = map.get(ValueFactory.newString("result")).asMapValue().map();
         resp.result.version = result.get(ValueFactory.newString("version")).asStringValue().asString();
         resp.result.versionCode = result.get(ValueFactory.newString("version_code")).asIntegerValue().asLong();
+    }
+
+    private static byte[] PackData(RPC.BackupServiceDataRequest req) {
+        MessageBufferPacker packer = MakeMsgPackerWithToken(req, 4);
+        try {
+            packer.packString("drive_name").packString(req.params.drive_name);
+            packer.packString("drive_url").packString(req.params.drive_url);
+            packer.packString("drive_dir").packString(req.params.drive_dir);
+            packer.packString("drive_access_token").packString(req.params.drive_access_token);
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (Exception e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        return packer.toByteArray();
+    }
+
+    private static void UnpackData(Map<Value, Value> map, RPC.BackupServiceDataResponse resp) {
+        Map<Value, Value> result = map.get(ValueFactory.newString("result")).asMapValue().map();
+    }
+
+    private static byte[] PackData(RPC.RestoreServiceDataRequest req) {
+        MessageBufferPacker packer = MakeMsgPackerWithToken(req, 4);
+        try {
+            packer.packString("drive_name").packString(req.params.drive_name);
+            packer.packString("drive_url").packString(req.params.drive_url);
+            packer.packString("drive_dir").packString(req.params.drive_dir);
+            packer.packString("drive_access_token").packString(req.params.drive_access_token);
+            packer.close(); // Never forget to close (or flush) the buffer
+        } catch (Exception e) {
+            e.printStackTrace();
+            assert(false);
+        }
+
+        return packer.toByteArray();
+    }
+
+    private static void UnpackData(Map<Value, Value> map, RPC.RestoreServiceDataResponse resp) {
+        Map<Value, Value> result = map.get(ValueFactory.newString("result")).asMapValue().map();
     }
 
     private static byte[] PackData(RPC.DownloadNewServiceRequest req) {

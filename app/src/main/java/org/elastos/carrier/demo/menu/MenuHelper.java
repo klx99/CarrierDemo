@@ -10,6 +10,8 @@ public class MenuHelper {
     }
     public class Session extends MenuSessionHelper {
     }
+    public class OneDrive extends MenuOneDriveHelper {
+    }
 
     public static void Init(MainActivity activity,
                             CarrierHelper.Listener carrierListener,
@@ -17,6 +19,7 @@ public class MenuHelper {
         StandardAuth.Init(activity);
         Carrier.Init(activity, carrierListener);
         Session.Init(activity, sessionListener);
+        OneDrive.Init(activity);
     }
 
     public static void Uninit() {

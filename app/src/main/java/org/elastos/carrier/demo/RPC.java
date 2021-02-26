@@ -1,5 +1,7 @@
 package org.elastos.carrier.demo;
 
+import org.elastos.carrier.demo.menu.MenuOneDriveHelper;
+
 import java.lang.reflect.Field;
 import java.util.Random;
 
@@ -8,6 +10,8 @@ public class RPC {
         SetBinary,
         GetBinary,
         GetVersion,
+        BackupServiceData,
+        RestoreServiceData,
         DownloadNewService,
         StartNewService,
         DeclarePost,
@@ -21,6 +25,8 @@ public class RPC {
         GetMultiComments,
         GetMultiLikesAndCommentsCount,
         GetMultiSubscribersCount,
+
+        OneDriveLogin,
     }
 
     public static Request MakeRequest(Type type) {
@@ -35,6 +41,12 @@ public class RPC {
             break;
         case GetVersion:
             req = new GetVersionRequest();
+            break;
+        case BackupServiceData:
+            req = new BackupServiceDataRequest();
+            break;
+        case RestoreServiceData:
+            req = new RestoreServiceDataRequest();
             break;
         case DownloadNewService:
             req = new DownloadNewServiceRequest();
@@ -122,6 +134,43 @@ public class RPC {
         class ExtResult extends Result {
             String version     = null;
             long versionCode   = 0;
+        }
+    }
+
+    static class BackupServiceDataRequest extends Request {
+        String method = "backup_service_data";
+        BackupServiceDataRequest.ExtParams params = new BackupServiceDataRequest.ExtParams();
+
+        class ExtParams extends Params {
+            String drive_name = "OneDrive";
+            String drive_url = "https://graph.microsoft.com/v1.0/me/drive";
+            String drive_dir = "/feeds-service/backup";
+            String drive_access_token = MenuOneDriveHelper.GetAccessToken();
+        }
+    }
+
+    static class BackupServiceDataResponse extends Response {
+        ExtResult result = new ExtResult();
+        class ExtResult extends Result {
+        }
+    }
+
+
+    static class RestoreServiceDataRequest extends Request {
+        String method = "restore_service_data";
+        RestoreServiceDataRequest.ExtParams params = new RestoreServiceDataRequest.ExtParams();
+
+        class ExtParams extends Params {
+            String drive_name = "OneDrive";
+            String drive_url = "https://graph.microsoft.com/v1.0/me/drive";
+            String drive_dir = "/feeds-service/backup";
+            String drive_access_token = MenuOneDriveHelper.GetAccessToken();
+        }
+    }
+
+    static class RestoreServiceDataResponse extends Response {
+        ExtResult result = new ExtResult();
+        class ExtResult extends Result {
         }
     }
 

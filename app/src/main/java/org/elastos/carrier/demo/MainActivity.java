@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.webkit.WebView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,6 +23,8 @@ import androidx.core.view.MenuCompat;
 import org.elastos.carrier.demo.carrier.CarrierHelper;
 import org.elastos.carrier.demo.menu.MenuHelper;
 import org.elastos.carrier.demo.session.CarrierSessionHelper;
+
+import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
     @Override
@@ -100,6 +103,12 @@ public class MainActivity extends AppCompatActivity {
             case R.id.action_carrier_get_version:
                 type = RPC.Type.GetVersion;
                 break;
+            case R.id.action_carrier_backup_service_data:
+                type = RPC.Type.BackupServiceData;
+                break;
+            case R.id.action_carrier_restore_service_data:
+                type = RPC.Type.RestoreServiceData;
+                break;
             case R.id.action_carrier_download_new_service:
                 type = RPC.Type.DownloadNewService;
                 break;
@@ -166,6 +175,19 @@ public class MainActivity extends AppCompatActivity {
             RPC.Type finalType = type;
             cmdHandler.post(() -> {
                 MenuHelper.Session.SendCommand(finalType);
+            });
+            return true;
+        }
+
+        switch (id) {
+            case R.id.action_onedrive_login:
+                type = RPC.Type.OneDriveLogin;
+                break;
+        }
+        if(type != null) {
+            RPC.Type finalType = type;
+            cmdHandler.post(() -> {
+                MenuHelper.OneDrive.SendCommand(finalType);
             });
             return true;
         }

@@ -7,6 +7,10 @@
         <item android:id="@+id/action_clear_log"
             android:title="Clear Log" />
     </group>
+    <group android:id="@+id/group_onedrive">
+        <item android:id="@+id/action_onedrive_login"
+            android:title="OneDrive Login" />
+    </group>
     <group android:id="@+id/group_carrier"
         android:enabled="false" >
         <item android:id="@+id/action_carrier_my_address"
@@ -18,6 +22,10 @@
 
         <item android:id="@+id/action_carrier_get_version"
             android:title="Get Version" />
+        <item android:id="@+id/action_carrier_backup_service_data"
+            android:title="Backup Service Data" />
+        <item android:id="@+id/action_carrier_restore_service_data"
+            android:title="Restore Service Data" />
         <item android:id="@+id/action_carrier_download_new_service"
             android:title="Download New Service" />
         <item android:id="@+id/action_carrier_start_new_service"
